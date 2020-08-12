@@ -1,0 +1,14 @@
+# directories
+.vs/
+
+building_output__/*
+!building_output__/example_build__/
+
+src/00_libs/*
+!src/00_libs/.gitkeep
+
+
+# files
+# .gitignore
+heiduzi.vcxproj.filters
+heiduzi.vcxproj.user

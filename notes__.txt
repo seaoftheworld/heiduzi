@@ -40,6 +40,7 @@ C. How to build this software for ms_Windows OS
 
 Built by: Microsoft Visual Studio Community 2019 Version 16.5.2
 
+
 a. Get the files from required libs
 -----------------------------------
 Download the following necessary files from the required libs and put them into 
@@ -65,22 +66,44 @@ the folders listed below inside 'src' folder (along with the source codes):
 The 'glfw3.dll' file is not requrired at compilation time, but required at runtime.
 So it could be moved to be in the same path with the .exe file, after it's built.
 
+
 b. Create a visual studio project
 ---------------------------------
 Create a visual studio project, copy the 'src' folder into the folder containing the vs-project file:
-    $(SolutionDir)$(ProjectName)\project_name.vsxproj
+    $(SolutionDir)$(ProjectName)\  (project_name.vsxproj      file exist here)
 
-and configure the settings for this project:
+or, if the vs-solution file is in the same directory with the vs-project file,
+the 'src' folder should be copied into the following folder:
+    $(SolutionDir)                 (project_name.vsxproj/.sln files exist here)
+
+
+
+Add the following file into the vs-project, thus enabling 'additional include directories' setting for C/C++, 
+    src\00_libs\gl3w\GL\gl3w.c
+and begin to configure the settings in Vistual Studio IDE for this project:
 
     1. Specify the path for the header files in this project,
-        $(SolutionDir)$(ProjectName)\src\00_libs\glfw-3.3.2.bin.WIN64\include
-        $(SolutionDir)$(ProjectName)\src\00_libs\gl3w
-        $(SolutionDir)$(ProjectName)\src\00_libs\glm-0.0.9-a2
-        $(SolutionDir)$(ProjectName)\src\00_libs\stb_image
-        $(SolutionDir)$(ProjectName)\src\
+            $(SolutionDir)$(ProjectName)\src\00_libs\glfw-3.3.2.bin.WIN64\include
+            $(SolutionDir)$(ProjectName)\src\00_libs\gl3w
+            $(SolutionDir)$(ProjectName)\src\00_libs\glm-0.9.9-a2  // not 0.0.9 !!!
+            $(SolutionDir)$(ProjectName)\src\00_libs\stb_image
+            $(SolutionDir)$(ProjectName)\src\
+
+       Since the vs-solution file is in the same directory with the vs-project file now,
+       the path should be set as below:
+        $(SolutionDir)src\00_libs\glfw-3.3.2.bin.WIN64\include
+        $(SolutionDir)src\00_libs\gl3w
+        $(SolutionDir)src\00_libs\glm-0.9.9-a2
+        $(SolutionDir)src\00_libs\stb_image
+        $(SolutionDir)src\
 
     2. Specify the path for the .lib files requried in this project, and the name of the .lib files,
-        $(SolutionDir)$(ProjectName)\src\00_libs\glfw-3.3.2.bin.WIN64\lib-vc2019
+           $(SolutionDir)$(ProjectName)\src\00_libs\glfw-3.3.2.bin.WIN64\lib-vc2019
+
+       Since the vs-solution file is in the same directory with the vs-project file now,
+       the path should be set as below:
+        $(SolutionDir)src\00_libs\glfw-3.3.2.bin.WIN64\lib-vc2019
+
         glfw3dll.lib
         opengl32.lib (legacy OpenGL support, file exist after installing vs2019)
 
@@ -88,12 +111,18 @@ and configure the settings for this project:
         $(SolutionDir)$(ProjectName)\building_output__\$(Platform)_$(Configuration)\
         $(SolutionDir)$(ProjectName)\building_output__\obj__\$(Platform)_$(Configuration)\
 
-    4. Turn off the 'SDL' support and 'JMC' support in the project's settings.
+       Since the vs-solution file is in the same directory with the vs-project file now,
+       the path should be set as below:
+        $(SolutionDir)building_output__\$(Platform)_$(Configuration)\
+        $(SolutionDir)building_output__\obj__\$(Platform)_$(Configuration)\
+
+    4. Turn off the 'SDL' support and 'JMC' support in the project's C/C++ -- General settings.
        With the 'SDL' turned on by default, the warnings from calling
        fopen(), scan()... ... functions are taken as errors,
        making the compilation fail.
 
     and set the platform to be x64 (x86 not supported) in 'Configuration Manager'.
+    and switch to 'show all files' view instead of the default view with virtual-filters.
 
 c. Adding the source codes
 --------------------------

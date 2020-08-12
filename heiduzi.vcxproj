@@ -50,8 +50,8 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{584CC14B-31A3-4F8B-A888-DD08DD153F77}</ProjectGuid>
-    <RootNamespace>proj00</RootNamespace>
+    <ProjectGuid>{2E49B9D0-7C9A-4BBD-8A9E-35A79974096F}</ProjectGuid>
+    <RootNamespace>heiduzi</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -104,8 +104,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)$(ProjectName)\building_output__\$(Platform)_$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)$(ProjectName)\building_output__\obj__\$(Platform)_$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)building_output__\$(Platform)_$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)building_output__\obj__\$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -131,14 +131,14 @@
       <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)$(ProjectName)\src\00_libs\glfw-3.3.2.bin.WIN64\include;$(SolutionDir)$(ProjectName)\src\00_libs\gl3w;$(SolutionDir)$(ProjectName)\src\00_libs\glm-0.9.9-a2;$(SolutionDir)$(ProjectName)\src\00_libs\stb_image;$(SolutionDir)$(ProjectName)\src\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)src\00_libs\glfw-3.3.2.bin.WIN64\include;$(SolutionDir)src\00_libs\gl3w;$(SolutionDir)src\00_libs\glm-0.9.9-a2;$(SolutionDir)src\00_libs\stb_image;$(SolutionDir)src\</AdditionalIncludeDirectories>
       <SupportJustMyCode>false</SupportJustMyCode>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)$(ProjectName)\src\00_libs\glfw-3.3.2.bin.WIN64\lib-vc2019</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glfw3dll.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)src\00_libs\glfw-3.3.2.bin.WIN64\lib-vc2019</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3dll.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
