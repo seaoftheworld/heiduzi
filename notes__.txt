@@ -1,0 +1,159 @@
+Contents
+````````
+    A. Target platforms
+    B. Libs relied on
+    C. How to build this software for ms_Windows OS
+    D. How to execute this software after built
+    E. Game Input 
+    F. Credits
+
+
+
+A. Target platforms
+===================
+ms_Windows OS with OpenGL support for now.
+
+Linux OS (EGL + X11) and Android platforms will be supported latter.
+
+Having been Tested on Lenovo-Z370 computer with:
+        Windows 7 SP1 OS
+
+        Intel(R) HD Graphics 3000 GPU
+            9.17.10.4229 driver, supporting OpenGL 3.1.0
+
+        Nvidia GeForce 410M GPU
+            23.21.13.9135 driver, supporting OpenGL 4.6.0
+
+
+
+B. Libs relied on
+=================
+glfw (3.3.2 for win64), for creating Window/Context, and keyboard/mouse input on ms_Windows,
+gl3w (or glew),         for OpenGL extensions on ms_Windows,
+glm (0.9.9-a2),         for 3d matrix math calculating,
+stb_image.h (v2.25),    to load texture data from .png files.
+
+
+
+C. How to build this software for ms_Windows OS
+===============================================
+
+Built by: Microsoft Visual Studio Community 2019 Version 16.5.2
+
+a. Get the files from required libs
+-----------------------------------
+Download the following necessary files from the required libs and put them into 
+the folders listed below inside 'src' folder (along with the source codes):
+
+    src\00_libs\glfw-3.3.2.bin.WIN64\include\GLFW
+        glfw3.h
+                             ... ...\lib-vc2019
+        glfw3dll.lib
+        glfw3.dll
+
+    src\00_libs\gl3w\GL
+        glcorearb.h
+        gl3w.h
+        gl3w.c
+
+    src\00_libs\glm-0.9.9-a2\
+        *
+
+    src\00_libs\stb_image\
+        stb_image.h
+
+The 'glfw3.dll' file is not requrired at compilation time, but required at runtime.
+So it could be moved to be in the same path with the .exe file, after it's built.
+
+b. Create a visual studio project
+---------------------------------
+Create a visual studio project, copy the 'src' folder into the folder containing the vs-project file:
+    $(SolutionDir)$(ProjectName)\project_name.vsxproj
+
+and configure the settings for this project:
+
+    1. Specify the path for the header files in this project,
+        $(SolutionDir)$(ProjectName)\src\00_libs\glfw-3.3.2.bin.WIN64\include
+        $(SolutionDir)$(ProjectName)\src\00_libs\gl3w
+        $(SolutionDir)$(ProjectName)\src\00_libs\glm-0.0.9-a2
+        $(SolutionDir)$(ProjectName)\src\00_libs\stb_image
+        $(SolutionDir)$(ProjectName)\src\
+
+    2. Specify the path for the .lib files requried in this project, and the name of the .lib files,
+        $(SolutionDir)$(ProjectName)\src\00_libs\glfw-3.3.2.bin.WIN64\lib-vc2019
+        glfw3dll.lib
+        opengl32.lib (legacy OpenGL support, file exist after installing vs2019)
+
+    3. Specify the building output directory (Optional), for example:
+        $(SolutionDir)$(ProjectName)\building_output__\$(Platform)_$(Configuration)\
+        $(SolutionDir)$(ProjectName)\building_output__\obj__\$(Platform)_$(Configuration)\
+
+    4. Turn off the 'SDL' support and 'JMC' support in the project's settings.
+       With the 'SDL' turned on by default, the warnings from calling
+       fopen(), scan()... ... functions are taken as errors,
+       making the compilation fail.
+
+    and set the platform to be x64 (x86 not supported) in 'Configuration Manager'.
+
+c. Adding the source codes
+--------------------------
+Add all the source code files into the vs-project with 'add existing item' function 
+from the IDE. Thus the project is ready to be built.
+
+
+
+D. How to execute this software after built
+===========================================
+
+a. Get the files required at run time
+-------------------------------------
+Get the following files required at run time, and put them into 
+the folders listed below (along with the .exe file):
+
+    building_output__\x64_Debug\
+        glfw3.dll
+
+    building_output__\x64_Debug\assets\
+        rb73_yForward_zUp.obj
+        rb73_base_color.png
+        rooms\*
+
+    building_output__\x64_Debug\glTestShaders\
+        vsh.txt
+        fsh.txt
+        _dbg_vsh.c
+        _dbg_fsh.c
+
+b. Start under CLI
+------------------
+After all the files mentioned above (required at run time) are ready,
+activate the .exe file under Command Line Interface to make the
+serial-console output clearly visible.
+
+
+
+E. Game Input 
+=============
+
+Up/Down/Left/Right-Arrows + Mouse-movement: Control the camera's position/directoin in the scene
+R, F    : Increase/Decrease the height of the camera 
+
+W/S/A/D : Navigate the player (Tank movement operation)
+W/S     : Move forward/backward
+A/D     : Turn left/right
+
+ESC     : Close the window and quit the software
+
+
+
+F. 3D Modeling Credits
+======================
+
+3D Modeling downloaded from the internet, and then edited with blender2.82:
+    rb73
+    low poly bedroom
+
+3d-model-loading and a few other source codes are from 
+tutorial-9: vbo indexing of 'learn opengl' tutorials.
+Some of them, like the string for window-title, 
+should be modified accordingly in the future.

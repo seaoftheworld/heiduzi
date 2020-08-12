@@ -1,0 +1,20 @@
+The 'glfw3.dll' file is also required at runtime for dynamic linking.
+It should be downloaded with the 'GLFW 3.3.2' lib, as noted below:
+
+  [00_libs_notes__.txt]
+    Download the following necessary files from the required libs
+    into the '00_libs' folder as listed below:
+
+        src\00_libs\glfw-3.3.2.bin.WIN64\include\GLFW
+            glfw3.h
+                                 ... ...\lib-vc2019
+            glfw3dll.lib
+            glfw3.dll
+
+        ... ...
+
+    The 'glfw3.dll' file above is not requrired at compilation time, but required at runtime.
+    So it could be moved to be in the same path with the .exe file, after it's built.
+
+Read the notes from the root folder for this project
+before building for more details.
