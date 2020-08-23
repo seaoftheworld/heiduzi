@@ -1,53 +1,66 @@
 #pragma once
 
-// Include 'GLM' to only use 'glm::vec3' ... data type, 
-// and glm::translate(), rotate()...
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-using namespace glm;
+#include "trigger.h"
+// #include <functional>
 
-#define NUM_VERTICES_FOR_BOX  (8)
-#define MAX_NUM_OBSTACLE_MESH (32)
-#define ZHEIGHT_OBSTACLE_MESH (8.0f)
-#define ZHEIGHT ZHEIGHT_OBSTACLE_MESH
+// These values are supposed to be less than 255 in most cases,
+// so 'unsigned char' could be used as index the address
+// the elements in an array[these_number]
+#define MAX_NUM_PLANE         (16)
+#define MAX_NUM_OBSTACLE_CUBE (32)
+#define MAX_NUM_TRIGGERS      (32)
 
-#define COLLISION_INFO_BIT_MASK_COLLISION_VALID  (1 << (sizeof(unsigned char) * 8 - 1))
+#define ZHEIGHT_OBSTACLE_CUBE (4.0f)
+#define ZHEIGHT_TRIGGER_PAD   (0.2f)
+
 // #define COLLISION_INFO_BIT_MASK_COLLISION_VALID  (1 << (7))
+#define COLLISION_INFO_BIT_MASK_COLLISION_VALID  (1 << (sizeof(unsigned char) * 8 - 1))
 #define COLLISION_INFO_BIT_MASK_NORMAL_NORTH  (1 << (0))
 #define COLLISION_INFO_BIT_MASK_NORMAL_EAST   (1 << (1))
 #define COLLISION_INFO_BIT_MASK_NORMAL_SOUTH  (1 << (2))
 #define COLLISION_INFO_BIT_MASK_NORMAL_WEST   (1 << (3))
 #define COLLISION_INFO_BIT_MASK_INSIDE_RECT   (1 << (4))
 
+typedef enum {
+    thePorch, theHall, theEastRoom, theWestRoom, theYard, roomMax
+} room;
+
+struct scenePlane {
+    cube obsCube[MAX_NUM_OBSTACLE_CUBE];
+    unsigned char numObsCubes;
+
+    triggerPad trigger[MAX_NUM_TRIGGERS];
+    unsigned char numTriggers;
     
-struct obstacleMesh {
-    enum normalId{
-        north = 0, east, south, west, max
-    };
-
-    obstacleMesh() {}
-    obstacleMesh(float *wh, glm::vec2 trans, float rotZ);
-
-
-    glm::vec3 vertices[NUM_VERTICES_FOR_BOX];
-    float xyWidth = 0, xyHeight = 0;
-    
-    glm::vec2 transXY = glm::vec2(0.0f, 0.0f);
-    float rotZ = 0;
-
-    glm::vec3 normal[max];
-    unsigned char collisionlInfo = 0;
+    // Other rects, triggers
+    //... ...
 };
 
-struct sceneSystem {
-    sceneSystem() {}
 
-    obstacleMesh obsMesh[MAX_NUM_OBSTACLE_MESH];
-    unsigned short numObstacleMesh = 0;
-    
-    static glm::vec2 coordinateConvert(glm::vec2 coord, glm::vec2 trans, float r);
+scenePlane *scene_GetCurrentPlane();
+void scene_SetCurrentPlane(unsigned char i);
 
-    void loadSceneInfo();
-    unsigned char onObstacleRect(glm::vec3 des);
-    glm::vec3 normalFromObstacleRect();
+void scene_LoadData(room r);
+
+unsigned char scene_InObsCube(float delta, glm::vec3 destinationPosition);
+unsigned char scene_NearObsCube(float delta, glm::vec3 destinationPosition);
+glm::vec3 scene_NormalFromObsCube();
+
+// glm::vec2 coordConvert2d(glm::vec2 coord, glm::vec2 trans, float r);
+// glm::vec3 sceneComboNormalFromObsCube();
+
+
+
+/*
+struct triggerPad {
+    triggerType type;
+    cube pad;
+
+    // Could also use a pointer-to-function if the functions to be called are not member-functions.
+    // When the functions tobe called are member-functions, however, pointer-to-function could also be used,
+    // it can be used with the object of that class together when calling:
+    // void Class::*pf(int, int); Class obj;
+    // (obj.*pf)(parameters ...);
+    std::function<void(triggerPad *, float)> update;
 };
+//*/

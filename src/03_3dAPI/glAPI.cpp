@@ -63,6 +63,30 @@ void _dbg_glDrawBox(float *vt) {
             indicesLine         // element array buffer
         );
         // glDisableVertexAttribArray(0);
+
+    // Draw a rectangle when 4 vertices (4 * 3-float) are passed in
+    // unsigned char indicesLineLoopIdx[] = {0, 1, 2, 3};
+
+    // glBindBuffer(GL_ARRAY_BUFFER, 0);
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    //     glEnableVertexAttribArray(0);  // attribute-0 from dbg-program shader: vertexPosition
+    
+    //     glVertexAttribPointer(
+    //         0,                  // attribute-0 from dbg-program shader: vertexPosition
+    //         3, GL_FLOAT,        // 3-floats for each vertex
+    //         GL_FALSE,           // normalized?
+    //         0,                  // stride in bytes  // 12 in this case (3 * sizeof(float) = 12)
+    //         vt                  // array buffer (not offset without vbo)
+    //     );
+
+    //     glDrawElements(
+    //         GL_LINE_LOOP,       // mode
+    //         4,                  // count
+    //         GL_UNSIGNED_BYTE,   // type
+    //         indicesLineLoopIdx  // element array buffer
+    //     );
+    //     // glDisableVertexAttribArray(0);
 }
 
 glGpuProgram::glGpuProgram(const std::string &vsh, const std::string &fsh) : m_id(0) {

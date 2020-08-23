@@ -28,9 +28,10 @@
     <ClCompile Include="src\03_3dAPI\3dAPI.cpp" />
     <ClCompile Include="src\03_3dAPI\glAPI.cpp" />
     <ClCompile Include="src\04_api\actor.cpp" />
+    <ClCompile Include="src\04_api\scene.cpp" />
     <ClCompile Include="src\04_api\layers.cpp" />
     <ClCompile Include="src\04_api\renderer.cpp" />
-    <ClCompile Include="src\04_api\scene.cpp" />
+    <ClCompile Include="src\04_api\trigger.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\testLayer.cpp" />
   </ItemGroup>
@@ -43,9 +44,11 @@
     <ClInclude Include="src\03_3dAPI\3dAPI.h" />
     <ClInclude Include="src\03_3dAPI\glAPI.h" />
     <ClInclude Include="src\04_api\actor.h" />
+    <ClInclude Include="src\04_api\scene.h" />
     <ClInclude Include="src\04_api\layers.h" />
     <ClInclude Include="src\04_api\renderer.h" />
-    <ClInclude Include="src\04_api\scene.h" />
+    <ClInclude Include="src\04_api\scene_data.h" />
+    <ClInclude Include="src\04_api\trigger.h" />
     <ClInclude Include="src\testLayer.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

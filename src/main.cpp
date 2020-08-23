@@ -41,8 +41,8 @@ int main(void)
         lastTime_Frame = currentTime;
         frames++;
         if ( currentTime - lastTime_1s >= 1.0f ){ // If more than 1s has passed
-            printf("  fps: %d/s.\n", frames);
-            printf("       %f ms/f.\n\n", 1000.0/(float)frames);
+            // printf("  fps: %d/s.\n", frames);
+            // printf("       %f ms/f.\n\n", 1000.0/(float)frames);
 
             frames = 0;
             lastTime_1s = currentTime;
