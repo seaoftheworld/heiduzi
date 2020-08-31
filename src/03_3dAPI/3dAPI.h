@@ -9,6 +9,7 @@ public:
     virtual void use() const = 0;
     virtual int getUniformLocation(const std::string &name) const = 0;
     virtual void setUniformMatrix4fv(int uniformId, const void *mat4f) const = 0;
+    virtual void setClearColor(float *rgba) const = 0;
 
     static gpuProgram *create(const std::string& vsh, const std::string& fsh);
 };

@@ -49,7 +49,7 @@ public:
 #define BITMASK_DOWN   (1 << 6)
 #define BITMASK_LEFT   (1 << 5)
 #define BITMASK_RIGHT  (1 << 4)
-#define BITMASK_TRIGGER   (1 << 3)
+#define BITMASK_READY  (1 << 3)
 #define BITMASK_FIRE      (1 << 2)
 #define BITMASK_INVENTORY (1 << 1)
 

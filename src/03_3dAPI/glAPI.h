@@ -16,6 +16,7 @@ public:
     void use() const override;
     int getUniformLocation(const std::string &name) const override;
     void setUniformMatrix4fv(int uniformId, const void *mat4f) const override;
+    void setClearColor(float *rgba) const override;
 
 private:
     GLuint m_id = 0;

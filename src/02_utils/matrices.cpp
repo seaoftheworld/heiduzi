@@ -17,25 +17,31 @@ glm::mat4 getProjectionMatrix(){
 
 
 // Initial position : on +Z
-glm::vec3 position = glm::vec3(2.f, -4.f, 1.f);
-glm::vec3 camDirection(0.f, 1.f, 0.f);
-glm::vec3 camUp(0.f, 0.f, 1.f);
+// glm::vec3 position = glm::vec3(2.f, -4.f, 1.f);
+// glm::vec3 camDirection(0.f, 1.f, 0.f);
+// glm::vec3 camUp(0.f, 0.f, 1.f);
 
-// glm::vec3 cameraPosition(2.f, -4.f, 1.f);
-// glm::vec3 cameraDirection(0.f, 1.f, 0.f);
-// glm::vec3 cameraUp(0.f, 0.f, 1.f);
+// glm::vec3 position = glm::vec3(17.0f, -3.5f, 9.5f);
+glm::vec3 position = glm::vec3(11.0f, -0.7f, 4.8f);
+glm::vec3 camDirection(0.0f);  // direc/up calculated according to h/v angle
+glm::vec3 camUp(0.0f);
 
 // Initial horizontal angle : toward -Z
 // float horizontalAngle = 3.14f;
-float horizontalAngle = 0.f;
+// float horizontalAngle = 0.0f;
 // Initial vertical angle : none
-float verticalAngle = 0.0f;
+// float verticalAngle = 0.0f;
+
+// float horizontalAngle = -1.125f;
+// float verticalAngle = -0.555f;
+float horizontalAngle = -0.92f;
+float verticalAngle = -0.415f;
 
 // Initial Field of View
 float initialFoV = 45.0f;
 
-float speed = 3.0f; // 3 units / second
 float mouseSpeed = 0.005f;
+float speed = 3.0f; // 3 units / second
 
 
 
@@ -94,6 +100,7 @@ void computeMatricesFromInputs(){
     //  cos(verticalAngle) * cos(horizontalAngle)
     // );
     // glm::vec3 direction(
+
     camDirection = glm::vec3(
         cos(verticalAngle) * sin(horizontalAngle), 
         cos(verticalAngle) * cos(horizontalAngle),
@@ -170,6 +177,15 @@ void computeMatricesFromInputs(){
     if ( glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS ) {
         // float speed = .01f;
         position.z -= speed * deltaTime;
+    }
+
+    if ( glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS ) {
+        // float speed = .01f;
+        printf("cam  position: %f, %f, %f\n", position.x, position.y, position.z);
+        printf("h angle      : %f\n", horizontalAngle);
+        printf("v angle      : %f\n\n", verticalAngle);
+        printf("cam direction: %f, %f, %f\n", camDirection.x, camDirection.y, camDirection.z);
+        printf("cam        up: %f, %f, %f\n\n\n", camUp.x, camUp.y, camUp.z);
     }
 
     float FoV = initialFoV;// - 5 * glfwGetMouseWheel(); // Now GLFW 3 requires setting up a callback for this. It's a bit too complicated for this beginner's tutorial, so it's disabled instead.

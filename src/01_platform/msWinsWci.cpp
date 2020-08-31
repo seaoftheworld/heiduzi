@@ -86,7 +86,7 @@ unsigned char msWinsGameWindow::init() {
     printf("         OpenGL initilized with GL-3-W.\n");
 
         // Dark blue background
-        glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+        glClearColor(0.0f, 0.0f, 0.4f, 1.0f);
         // Enable depth test
         glEnable(GL_DEPTH_TEST);
         // Accept fragment if it closer to the camera than the former one
@@ -183,13 +183,13 @@ void msWinsGameContext::swap() {
 //     return valueFromGlfw;
 // }
 
-#define BITMASK_UP     (1 << 7)
-#define BITMASK_DOWN   (1 << 6)
-#define BITMASK_LEFT   (1 << 5)
-#define BITMASK_RIGHT  (1 << 4)
-#define BITMASK_TRIGGER   (1 << 3)
-#define BITMASK_FIRE      (1 << 2)
-#define BITMASK_INVENTORY (1 << 1)
+// #define BITMASK_UP     (1 << 7)
+// #define BITMASK_DOWN   (1 << 6)
+// #define BITMASK_LEFT   (1 << 5)
+// #define BITMASK_RIGHT  (1 << 4)
+// #define BITMASK_READY  (1 << 3)
+// #define BITMASK_FIRE      (1 << 2)
+// #define BITMASK_INVENTORY (1 << 1)
 
 unsigned char msWinsGameInput::isAnyKeyPressed() {
     unsigned char inputByte = 0;
@@ -199,7 +199,7 @@ unsigned char msWinsGameInput::isAnyKeyPressed() {
     inputByte = inputByte | ( (glfwGetKey(window, GLFW_KEY_A ) == GLFW_PRESS) ? (BITMASK_LEFT) : (0) );
     inputByte = inputByte | ( (glfwGetKey(window, GLFW_KEY_D ) == GLFW_PRESS) ? (BITMASK_RIGHT): (0) );
 
-    inputByte = inputByte | ( (glfwGetKey(window, GLFW_KEY_J ) == GLFW_PRESS) ? (BITMASK_TRIGGER)  : (0) );
+    inputByte = inputByte | ( (glfwGetKey(window, GLFW_KEY_J ) == GLFW_PRESS) ? (BITMASK_READY)  : (0) );
     inputByte = inputByte | ( (glfwGetKey(window, GLFW_KEY_K ) == GLFW_PRESS) ? (BITMASK_FIRE)     : (0) );
     inputByte = inputByte | ( (glfwGetKey(window, GLFW_KEY_I ) == GLFW_PRESS) ? (BITMASK_INVENTORY): (0) );
 
@@ -217,7 +217,7 @@ unsigned char msWinsGameInput::isAnyKeyPressed() {
     // }
 
     // if ( glfwGetKey(window, GLFW_KEY_J ) == GLFW_PRESS ) {
-    //     inputByte |= BITMASK_TRIGGER;
+    //     inputByte |= BITMASK_READY;
     // }
     // if ( glfwGetKey(window, GLFW_KEY_K ) == GLFW_PRESS ) {
     //     inputByte |= BITMASK_FIRE;
@@ -245,7 +245,7 @@ gameInputStatus msWinsGameInput::read() {
     // inputStatus.turnLeft     = (inputByte & BITMASK_LEFT)  ? true : false;
     // inputStatus.turnRight    = (inputByte & BITMASK_RIGHT) ? true : false;
 
-    // inputStatus.trigger   = (inputByte & BITMASK_TRIGGER)   ? true : false;
+    // inputStatus.trigger   = (inputByte & BITMASK_READY)   ? true : false;
     // inputStatus.fire      = (inputByte & BITMASK_FIRE)      ? true : false;
     // inputStatus.inventory = (inputByte & BITMASK_INVENTORY) ? true : false;
 
@@ -262,7 +262,7 @@ gameInputStatus msWinsGameInput::read() {
     // //     inputStatus.turnRight = true;
     // // }
 
-    // // if ( inputByte | BITMASK_TRIGGER ) {
+    // // if ( inputByte | BITMASK_READY ) {
     // //     inputStatus.trigger = true;
     // // }
     // // if ( inputByte | BITMASK_FIRE ) {

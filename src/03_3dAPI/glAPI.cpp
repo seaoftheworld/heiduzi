@@ -218,6 +218,12 @@ void glGpuProgram::setUniformMatrix4fv(int uniformId, const void *mat4f) const {
     glUniformMatrix4fv((GLint)uniformId, 1, GL_FALSE, (const GLfloat *)mat4f);
 }
 
+void glGpuProgram::setClearColor(float *rgba) const {
+    if (rgba) {
+        glClearColor(rgba[0], rgba[1], rgba[2], rgba[3]);
+    }
+}
+
 glGpuProgram::~glGpuProgram() {
     if (m_id) {
         glDeleteProgram(m_id);

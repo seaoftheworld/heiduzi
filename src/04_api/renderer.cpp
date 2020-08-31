@@ -78,6 +78,12 @@ void testRenderer::unsetProgram() {
     }
 }
 
+void testRenderer::setClearColor(float *rgba) {
+    if (m_gpuProgram) {
+        m_gpuProgram->setClearColor(rgba);
+    }
+}
+
 // void testRenderer::getUniformLocation_MVP_Mat(const std::string &mvp) {
 //     if (!m_gpuProgram)
 //         return;
@@ -178,6 +184,84 @@ void testRenderer::allocateBuffers(const std::string &model, const std::string &
 
         m_texture = texture2D::create(texture.c_str());
     }
+}
+
+std::vector<glm::vec3> _indexed_vertices;
+std::vector<glm::vec2> _indexed_uvs;
+std::vector<glm::vec3> _indexed_normals;
+std::vector<unsigned short> _indices;
+
+const void *_bufferPointer[testRenderer::vBuffersId::max] = {};
+unsigned int _bufferSize[testRenderer::vBuffersId::max] = {};
+
+std::vector<glm::vec3> _vertices;
+std::vector<glm::vec2> _uvs;
+std::vector<glm::vec3> _normals;
+
+unsigned char _step = 0;
+unsigned char testRenderer::nonblocking_allocateBuffers(const std::string &model, const std::string &texture) {
+
+    while(_step == 0) {
+        unsigned char res = nonblocking_loadObj(model.c_str(), _vertices, _uvs, _normals);
+        if (res != 0) {
+            // printf("  non blocking buffer-alloc return: %d\n", res);
+            return res;  // 255, 254 are possible wrong value, 1, 2 are supposed to be returned if nothing wrong
+        }
+
+        _step++;
+    }
+
+    while(_step == 1) {
+        unsigned char res = nonblocking_indexVbo(_vertices, _uvs, _normals, 
+            _indices, _indexed_vertices, _indexed_uvs, _indexed_normals);
+
+        if (res != 0) {
+            // printf("  non blocking buffer-alloc return: 3 (step 1)\n");
+            return 3;
+        }
+
+        _step++;
+    }
+
+    _bufferPointer[id::vertices] = (const void *)&_indexed_vertices[0];
+    _bufferPointer[id::uvs] = (const void *) &_indexed_uvs[0];
+    _bufferPointer[id::normals] = (const void *) &_indexed_normals[0];
+    _bufferPointer[id::indices] = (const void *) &_indices[0];
+    
+    _bufferSize[id::vertices] = _indexed_vertices.size() * sizeof(glm::vec3);
+    _bufferSize[id::uvs] = _indexed_uvs.size() * sizeof(glm::vec2);
+    _bufferSize[id::normals] = _indexed_normals.size() * sizeof(glm::vec3);
+    _bufferSize[id::indices] = _indices.size();
+
+    while(_step == 2) {
+        for (unsigned int i = id::vertices; i < id::max; i++) {
+            if (i != id::indices) {
+                printf("  vbo allocating ...\n");
+                m_vBuffers[i] = verticesBuffer::create(_bufferPointer[i], _bufferSize[i]);
+            }
+            else {
+                printf("  ibo allocating ...\n");
+                m_iBuffer = indicesBuffer::create(_bufferPointer[i], _bufferSize[i]);
+            }
+        }
+
+        m_texture = texture2D::create(texture.c_str());
+
+        _step++;
+    }
+
+    _vertices.clear();
+    _uvs.clear();
+    _normals.clear();
+
+    _indexed_vertices.clear();
+    _indexed_uvs.clear();
+    _indexed_normals.clear();
+    _indices;
+
+    _step = 0;
+    printf("  non blocking buffer-alloc: %d\n", _step);
+    return 0;
 }
 
 void testRenderer::freeBuffers() {

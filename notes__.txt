@@ -171,6 +171,8 @@ W/S/A/D : Navigate the player (Tank movement operation)
 W/S     : Move forward/backward
 A/D     : Turn left/right
 
+K       : To get up/down stairs or open-door when player's facing the trigger
+
 ESC     : Close the window and quit the software
 
 

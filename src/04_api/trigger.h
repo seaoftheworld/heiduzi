@@ -8,6 +8,17 @@
 // #define NUM_VERTICES_FOR_RECT (4)
 #define NUM_VERTICES_FOR_CUBE (8)
 
+#define TRIGGER_STATUS_UPDATING          (1 << (sizeof(unsigned char) * 8 - 1))
+#define TRIGGER_STATUS_FIRST_UPDATE_DONE (1 << (6))
+#define TRIGGER_STATUS_LAST_UPDATE_DONE  (1 << (5))
+// #define TRIGGER_STATUS_POS_VALID    (1 << (0))
+// #define TRIGGER_STATUS_ANG_VALID    (1 << (1))
+// #define TRIGGER_STATUS_INPUT_VALID  (1 << (2))
+
+#define TRIGGER_TYPE_CHANGE_PLANE "trigger_ChangePlane"
+#define TRIGGER_TYPE_CHANGE_VIEW "trigger_ChangeVIEW"
+#define TRIGGER_TYPE_OPEN_DOOR "trigger_OpenDoor"
+
 enum nIdx {
     north = 0, east, south, west, max
 };
@@ -65,25 +76,37 @@ public:
     triggerType type;
     cube pad; 
 
+    unsigned char status;
+
+    float valid_angle;
+    float anim_time;             // can be used for changePlane-trigger (go up/down stairs),  
+    unsigned short anim_repeat;  // pick item trigger (squad to pick), or open door anim...
+
+    glm::vec3 *pos;
+    float *rot;
 
     // Data for trigger_Investigate
     // Data for trigger_Item
     // Data for trigger_Ammo
-    // Data for trigger_OpenDoor
-    // Data for trigger_ChangeView
+    
+    // Data only used for trigger_ChangeView
+    // glm::vec3 vector;
+    // float speed;
+    float movingVecSpd[4];
+    unsigned char targetPlaneIdx;
 
-    // Data for trigger_ChangePlane
-    glm::vec3 vector;
-    float speed;
-    unsigned short anim_time;    // use animation or script (???) to control how the player
-    unsigned short anim_repeat;  // gets from 1 plane to another (eg. get up/down stairs)
-    float valid_yAngle;
+    // Data only used for trigger_OpenDoor
+    float enteringPosRot[4];
+    unsigned char targetRoomIdx;
     
     // Data for trigger_Slope
 
-    void init(triggerUpdater* p);
+    void init(triggerUpdater *p);
 
-    unsigned char isTriggered();
+    // unsigned char isTriggered();
+    // unsigned char calculateStatus(glm::vec3 pos, float r);
+    // unsigned char getStatus();
+
     void update(float delta);
 
 private:
@@ -104,8 +127,14 @@ class changeViewUpdater : public triggerUpdater {
 class changePlaneUpdater : public triggerUpdater {
     void update(triggerPad *trigger, float delta) override;
 };
+class openDoorUpdater : public triggerUpdater {
+    void update(triggerPad *trigger, float delta) override;
+};
 // class ...Updater : public triggerUpdater { ... };
 
 extern changeViewUpdater updater_ChangeView;
 extern changePlaneUpdater updater_ChangePlane;
+extern openDoorUpdater updater_OpenDoor;
 // extern ...Updater updater_...;
+
+unsigned char insideArea(glm::vec3 *pos, rect *area, float margin, glm::vec2 *converted);

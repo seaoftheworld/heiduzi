@@ -24,6 +24,8 @@ public:
         _3d_printInfo();
     }
 
+    static void setClearColor(float *rgba);
+
     static void setTestGpuProgram();
     static void useTestGpuProgram();
 
@@ -51,6 +53,7 @@ public:
 
     // void allocateBuffers(room *p);  // by calling verticesBuffer::create()
     void allocateBuffers(const std::string &model, const std::string &texture);
+    unsigned char nonblocking_allocateBuffers(const std::string &model, const std::string &texture);
     void freeBuffers();
 
     inline unsigned char getTextureSlot() const { return m_slot; }
