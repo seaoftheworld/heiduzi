@@ -34,6 +34,7 @@ areaData test01_obsAreasInFrontYard[] = {
     {  0.5f,  3.75f,   0.0f, glm::vec3(0.0f), glm::vec3(13.25f, 6.125f, 0.0f) },
 
     {  1.0f,  1.0,   __PI_4, glm::vec3(0.0f), glm::vec3( 2.0f, 2.0f, 0.0f) },
+    // {  1.0f,  1.0,   __PI_4, glm::vec3(0.0f), glm::vec3( -0.1f, -0.1f, 0.0f) },
     
     {  }
 };

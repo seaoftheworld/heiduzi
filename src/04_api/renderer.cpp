@@ -202,6 +202,19 @@ unsigned char _step = 0;
 unsigned char testRenderer::nonblocking_allocateBuffers(const std::string &model, const std::string &texture) {
 
     while(_step == 0) {
+        _vertices.clear();
+        _uvs.clear();
+        _normals.clear();
+
+        _indexed_vertices.clear();
+        _indexed_uvs.clear();
+        _indexed_normals.clear();
+        _indices.clear();
+
+        _step++;
+    }
+
+    while(_step == 1) {
         unsigned char res = nonblocking_loadObj(model.c_str(), _vertices, _uvs, _normals);
         if (res != 0) {
             // printf("  non blocking buffer-alloc return: %d\n", res);
@@ -211,7 +224,7 @@ unsigned char testRenderer::nonblocking_allocateBuffers(const std::string &model
         _step++;
     }
 
-    while(_step == 1) {
+    while(_step == 2) {
         unsigned char res = nonblocking_indexVbo(_vertices, _uvs, _normals, 
             _indices, _indexed_vertices, _indexed_uvs, _indexed_normals);
 
@@ -233,7 +246,7 @@ unsigned char testRenderer::nonblocking_allocateBuffers(const std::string &model
     _bufferSize[id::normals] = _indexed_normals.size() * sizeof(glm::vec3);
     _bufferSize[id::indices] = _indices.size();
 
-    while(_step == 2) {
+    while(_step == 3) {
         for (unsigned int i = id::vertices; i < id::max; i++) {
             if (i != id::indices) {
                 printf("  vbo allocating ...\n");
@@ -250,17 +263,9 @@ unsigned char testRenderer::nonblocking_allocateBuffers(const std::string &model
         _step++;
     }
 
-    _vertices.clear();
-    _uvs.clear();
-    _normals.clear();
-
-    _indexed_vertices.clear();
-    _indexed_uvs.clear();
-    _indexed_normals.clear();
-    _indices;
-
-    _step = 0;
     printf("  non blocking buffer-alloc: %d\n", _step);
+    _step = 0;
+    
     return 0;
 }
 

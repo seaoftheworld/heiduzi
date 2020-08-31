@@ -5,7 +5,10 @@ building_output__/*
 !building_output__/example_build__/
 
 src/00_libs/*
-!src/00_libs/.gitkeep
+# !src/00_libs/.gitkeep
+!src/00_libs/00_libs.zip
+
+src/not_used__/
 
 
 # files

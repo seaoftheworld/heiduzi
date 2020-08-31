@@ -26,6 +26,14 @@ unsigned char nonblocking_loadObj(const char *path,
     std::vector<glm::vec3> & out_normals
 ){
     if (step == 0) {
+        vertexIndices.clear();
+        uvIndices.clear();
+        normalIndices.clear();
+
+        temp_vertices.clear();
+        temp_uvs.clear();
+        temp_normals.clear();
+
         printf("  Loading OBJ file %s...\n", path);
         file = fopen(path, "r");
         if( file == NULL ){
@@ -131,14 +139,6 @@ unsigned char nonblocking_loadObj(const char *path,
 
     file = NULL;
     step = 0;
-
-    vertexIndices.clear();
-    uvIndices.clear();
-    normalIndices.clear();
-
-    temp_vertices.clear();
-    temp_uvs.clear();
-    temp_normals.clear();
 
     return step;
 }

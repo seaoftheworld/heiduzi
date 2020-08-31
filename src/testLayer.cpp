@@ -24,8 +24,10 @@ static std::string roomTexture;
 static void getModelTexturePath(room rm) {
     switch ( rm ) {
         case thePorch:
-            roomMesh    = "assets/rooms/thePorch/rb73_yForward_zUp.obj";
+            // roomMesh    = "assets/rooms/thePorch/rb73_yForward_zUp.obj";
             roomTexture = "assets/rooms/thePorch/low_poly_room_002.png";
+            roomMesh    = "assets/rooms/thePorch/Misa.obj";
+            // roomTexture = "assets/rooms/thePorch/Misa.png";
         break;
 
         case theYard:
@@ -121,13 +123,27 @@ void test_gameLayer::attach00() {
 
 void test_gameLayer::attach01() {
     // Load the model and texture files for a room/player/3d-obj...
-    const std::string &roomMesh    = "assets/rooms/thePorch/rb73_yForward_zUp.obj";
+    // const std::string &roomMesh    = "assets/rooms/thePorch/rb73_yForward_zUp.obj";
     const std::string &roomTexture = "assets/rooms/thePorch/low_poly_room_002.png";
-    roomRenderer.allocateBuffers(roomMesh, roomTexture);
+    const std::string &roomMesh    = "assets/rooms/thePorch/Misa.obj";
+    // const std::string &roomTexture = "assets/rooms/thePorch/Misa.png";
+    // roomRenderer.allocateBuffers(roomMesh, roomTexture);
+    while(1) {
+        unsigned char alloc_result = roomRenderer.nonblocking_allocateBuffers(roomMesh, roomTexture);
+        if (alloc_result == 0) {
+            break;
+        }
+    }
     
     const std::string &playerMesh    = "assets/rb73_yForward_zUp.obj";
     const std::string &playerTexture = "assets/rb73_base_color.png";
-    playerRenderer.allocateBuffers(playerMesh, playerTexture);
+    // playerRenderer.allocateBuffers(playerMesh, playerTexture);
+    while(1) {
+        unsigned char alloc_result = playerRenderer.nonblocking_allocateBuffers(playerMesh, playerTexture);
+        if (alloc_result == 0) {
+            break;
+        }
+    }
 }
 
 void test_gameLayer::attach02() {
