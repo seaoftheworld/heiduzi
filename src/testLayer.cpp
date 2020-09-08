@@ -25,8 +25,8 @@ static void getModelTexturePath(room rm) {
     switch ( rm ) {
         case thePorch:
             // roomMesh    = "assets/rooms/thePorch/rb73_yForward_zUp.obj";
-            roomTexture = "assets/rooms/thePorch/low_poly_room_002.png";
-            roomMesh    = "assets/rooms/thePorch/Misa.obj";
+            roomTexture = "assets/rooms/thePorch/backyard.png";
+            roomMesh    = "assets/rooms/thePorch/backyard.obj";
             // roomTexture = "assets/rooms/thePorch/Misa.png";
         break;
 
@@ -54,14 +54,14 @@ static void enterRoomUpdate(targetPlaceInfo targetPlace) {
 static glm::vec3 positionCorrection(float delta, glm::vec3 to, glm::vec3 from) {
     
     glm::vec3 des = to;
-    unsigned char numObsCubeNear = scene_NearObsCube(delta, des);
+    unsigned char numObsCubeNear = scene_findCollidingObsCube(delta, des);
 
     if (numObsCubeNear == 0) {
         // printf("   pos-correction b-0: no obs touched.\n");
         return des;
     }
 
-    glm::vec3 normal = scene_NormalFromNearObsCube();
+    glm::vec3 normal = scene_normalFromCollidingObsCube();
     printf("\n\n   num obs near: %d\n", numObsCubeNear);
     printf("   hitNoraml: %f, %f, %f\n", normal.x, normal.y, normal.z);
 
@@ -77,13 +77,14 @@ static glm::vec3 positionCorrection(float delta, glm::vec3 to, glm::vec3 from) {
     // printf("  __des on cube[4] coord: %f, %f\n", coord.x, coord.y);
 
 
-    if ( scene_InNearObsCube(des) == 0 ) {
-        printf("   pos-correction b-1: correction valid, %f, %f.\n\n\n", des.x, des.y);
-        return des;
-    }
-    else {
+    // if ( scene_insideCollidingObsCube(des) ) {
+    if ( scene_insideAnyObsCube(des) ) {
         printf("   pos-correction b-2: correction aborted.\n\n\n");
         return from;
+    }
+    else {
+        printf("   pos-correction b-1: correction valid, %f, %f.\n\n\n", des.x, des.y);
+        return des;
     }
 }
 
@@ -124,20 +125,24 @@ void test_gameLayer::attach00() {
 void test_gameLayer::attach01() {
     // Load the model and texture files for a room/player/3d-obj...
     // const std::string &roomMesh    = "assets/rooms/thePorch/rb73_yForward_zUp.obj";
-    const std::string &roomTexture = "assets/rooms/thePorch/low_poly_room_002.png";
-    const std::string &roomMesh    = "assets/rooms/thePorch/Misa.obj";
+    // const std::string &roomTexture = "assets/rooms/thePorch/low_poly_room_002.png";
+    // const std::string &roomMesh    = "assets/rooms/thePorch/Misa.obj";
     // const std::string &roomTexture = "assets/rooms/thePorch/Misa.png";
     // roomRenderer.allocateBuffers(roomMesh, roomTexture);
+    const std::string &roomTexture = "assets/rooms/thePorch/backyard.png";
+    const std::string &roomMesh    = "assets/rooms/thePorch/backyard.obj";
     while(1) {
         unsigned char alloc_result = roomRenderer.nonblocking_allocateBuffers(roomMesh, roomTexture);
         if (alloc_result == 0) {
             break;
         }
     }
-    
+
+    // const std::string &playerMesh    = "assets/rb73_yForward_zUp.obj";
+    // const std::string &playerTexture = "assets/rb73_base_color.png";
+    // playerRenderer.allocateBuffers(playerMesh, playerTexture);
     const std::string &playerMesh    = "assets/rb73_yForward_zUp.obj";
     const std::string &playerTexture = "assets/rb73_base_color.png";
-    // playerRenderer.allocateBuffers(playerMesh, playerTexture);
     while(1) {
         unsigned char alloc_result = playerRenderer.nonblocking_allocateBuffers(playerMesh, playerTexture);
         if (alloc_result == 0) {
@@ -220,10 +225,13 @@ void test_gameLayer::update(float deltaTime, gameInputStatus input) {
             // setSceneStatus( getSceneStatus() | SCENE_STATUS_BIT_MASK_OPENNING_DOOR);
         
         targetPlaceInfo target;
-        target.rm = thePorch;
+        target.rm = thePorch;  // the backyard model is loaded and displayed now
         target.pl = 0;
-        target.enteringPosRot[0] = 9.0f;
-        target.enteringPosRot[1] = 7.5f;
+        // target.enteringPosRot[0] = 9.0f;
+        // target.enteringPosRot[1] = 7.5f;
+        // target.enteringPosRot[2] = 0.0f;
+        target.enteringPosRot[0] = 3.2f;
+        target.enteringPosRot[1] = 3.0f;
         target.enteringPosRot[2] = 0.0f;
         target.enteringPosRot[3] = __PI;
         
@@ -325,7 +333,8 @@ void test_gameLayer::update(float deltaTime, gameInputStatus input) {
     }
     else {
         // set gl clear color to be blue
-        float blue_rgba[] = {0.0f, 0.0f, 0.4f, 1.0f};
+        // float blue_rgba[] = {0.0f, 0.0f, 0.4f, 1.0f};
+        float blue_rgba[] = {0.66f, 0.88f, 1.00f, 1.0f};
         testRenderer::setClearColor(blue_rgba);
     }
 }
@@ -359,19 +368,20 @@ void test_gameLayer::render() {
 
     if ( scene_getStatus(SCENE_STATUS_PLAYING_OPEN_DOOR_ANIMATION) ||
          scene_getStatus(SCENE_STATUS_ALLOCATING_VBO_AND_TEXTURE) ) {
-        //display door animation ??? ...
         // printf("black screen render\n\n\n");
+        //display door animation ??? ...
     }
     else {
 
         // printf("normal render\n");
+
         // To draw debug lines for obsCubes and triggers in the current plane
         scenePlane *plane = scene_getCurrentPlane();
         for (unsigned char i = 0; i < plane->numObsCubes; i++) {
 
             cube *obsCube = &plane->obsCube[i];
-            // if ( (obsCube->bottomRect.collisionInfo & COLLISION_INFO_BIT_MASK_COLLISION_VALID) != 0 ) {
-            if (1) {
+            if ( (obsCube->bottomRect.collisionInfo & COLLISION_BIT_MASK_VALID) != 0 ) {
+            // if (1) {
 
                 float vt[NUM_VERTICES_FOR_CUBE * 3] = { 0 };
                 for (unsigned char j = 0; j < NUM_VERTICES_FOR_CUBE; j++) {
@@ -414,7 +424,7 @@ void test_gameLayer::render() {
     // To draw debug lines
     for (unsigned char i = 0; i < scene_00.numObstacleMesh; i++) {
 
-        if ( (scene_00.obsMesh[i].collisionlInfo & COLLISION_INFO_BIT_MASK_COLLISION_VALID) != 0 ) {
+        if ( (scene_00.obsMesh[i].collisionlInfo & COLLISION_BIT_MASK_VALID) != 0 ) {
             // float vt[NUM_VERTICES_FOR_BOX][3];
             // for (unsigned char j = 0; j < NUM_VERTICES_FOR_BOX; j++) {
             //     vt[j][0] = scene_00.obsMesh[i].vertices[j].x;

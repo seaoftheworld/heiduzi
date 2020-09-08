@@ -189,11 +189,25 @@ triggerData test01_trgPadsOnPlane01[] = {
 // };
 
 
+// 03. camera data
+struct camSwitchData {
+    areaData area;
+    unsigned char targetIndex;
+};
+struct cameraData {
+    unsigned char index;
+    camSwitchData *sw;
+    // unsigned char numSwitches;
+};
+
+
 // 04. Planes that contain 'obstacle cubes', 'triggers', and 'transfers'
 typedef struct {
     areaData *obsAreas;
     triggerData *trgAreas;
     // transferData *trfAreas;
+
+    cameraData *cam;
 } planeData;
 
 // planeData plane00 = { test00_obsAreasInBedRoom };
@@ -207,10 +221,10 @@ planeData aPlane[] = {
     // Plane 00
     // { test00_obsAreasInBedRoom, test00_trgPadsOnPlane00 },
     // { test02_obsAreasInFrontYard, test01_trgPadsInFrontYard },
-    { test01_obsAreasInFrontYard, test01_trgPadsInFrontYard },
+    { test01_obsAreasInFrontYard, test01_trgPadsInFrontYard, NULL },
 
     // Plane 01
-    { test01_obsAreasOnPlane01, test01_trgPadsOnPlane01 }
+    { test01_obsAreasOnPlane01, test01_trgPadsOnPlane01, NULL }
 };
 planeData *apPlane[] = {
     &aPlane[0],

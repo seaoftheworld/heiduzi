@@ -21,21 +21,46 @@ glm::mat4 getProjectionMatrix(){
 // glm::vec3 camDirection(0.f, 1.f, 0.f);
 // glm::vec3 camUp(0.f, 0.f, 1.f);
 
-// glm::vec3 position = glm::vec3(17.0f, -3.5f, 9.5f);
-glm::vec3 position = glm::vec3(11.0f, -0.7f, 4.8f);
+// // glm::vec3 position = glm::vec3(17.0f, -3.5f, 9.5f);
+// glm::vec3 position = glm::vec3(11.0f, -0.7f, 4.8f);
+// glm::vec3 camDirection(0.0f);  // direc/up calculated according to h/v angle
+// glm::vec3 camUp(0.0f);
+
+// // Initial horizontal angle : toward -Z
+// // float horizontalAngle = 3.14f;
+// // float horizontalAngle = 0.0f;
+// // Initial vertical angle : none
+// // float verticalAngle = 0.0f;
+
+// // float horizontalAngle = -1.125f;
+// // float verticalAngle = -0.555f;
+// float horizontalAngle = -0.92f;
+// float verticalAngle = -0.415f;
+
+// glm::vec3 position = glm::vec3(11.0f, -0.7f, 4.8f);
+// float horizontalAngle = -0.92f;
+// float verticalAngle = -0.415f;
+
+// To the door in the back yard
+// glm::vec3 position = glm::vec3(8.049f, -0.294f, 1.073f);
+// float horizontalAngle = -1.05f;
+// float verticalAngle = -0.245f;
+glm::vec3 position = glm::vec3(7.783f, -1.329f, 1.178f);
+float horizontalAngle = -7.195f;
+float verticalAngle = -0.135f;
+
+// To the gate in the back yard
+// glm::vec3 position = glm::vec3(-4.496f, 3.65f, 2.19f);
+// float horizontalAngle = -3.075f;
+// float verticalAngle = -0.595f;
+// glm::vec3 position = glm::vec3(-6.54f, 2.91f, 0.973f);
+// float horizontalAngle = -3.485f;
+// float verticalAngle = -0.19f;
+
 glm::vec3 camDirection(0.0f);  // direc/up calculated according to h/v angle
 glm::vec3 camUp(0.0f);
 
-// Initial horizontal angle : toward -Z
-// float horizontalAngle = 3.14f;
-// float horizontalAngle = 0.0f;
-// Initial vertical angle : none
-// float verticalAngle = 0.0f;
 
-// float horizontalAngle = -1.125f;
-// float verticalAngle = -0.555f;
-float horizontalAngle = -0.92f;
-float verticalAngle = -0.415f;
 
 // Initial Field of View
 float initialFoV = 45.0f;

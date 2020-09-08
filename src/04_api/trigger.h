@@ -30,7 +30,7 @@ struct rect {
     float width = 0, height = 0;
     float rotZ = 0;
 
-    glm::vec3 normal[nIdx::max] = { glm::vec3(0.0f) };
+    // glm::vec3 normal[nIdx::max] = { glm::vec3(0.0f) };
     unsigned char collisionInfo = 0;
 
     rect(glm::vec3 ctr, glm::vec3 lb, float *size_rot);

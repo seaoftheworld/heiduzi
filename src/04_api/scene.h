@@ -19,12 +19,21 @@
 // #define ZHEIGHT_LIFT_PAD   (0.4f)
 
 // #define COLLISION_INFO_BIT_MASK_COLLISION_VALID  (1 << (7))
-#define COLLISION_INFO_BIT_MASK_COLLISION_VALID  (1 << (sizeof(unsigned char) * 8 - 1))
-#define COLLISION_INFO_BIT_MASK_NORMAL_NORTH     (1 << (0))
-#define COLLISION_INFO_BIT_MASK_NORMAL_EAST      (1 << (1))
-#define COLLISION_INFO_BIT_MASK_NORMAL_SOUTH     (1 << (2))
-#define COLLISION_INFO_BIT_MASK_NORMAL_WEST      (1 << (3))
-#define COLLISION_INFO_BIT_MASK_INSIDE_RECT      (1 << (4))
+// #define COLLISION_INFO_BIT_MASK_COLLISION_VALID  (1 << (sizeof(unsigned char) * 8 - 1))
+// #define COLLISION_INFO_BIT_MASK_NORMAL_NORTH     (1 << (0))
+// #define COLLISION_INFO_BIT_MASK_NORMAL_EAST      (1 << (1))
+// #define COLLISION_INFO_BIT_MASK_NORMAL_SOUTH     (1 << (2))
+// #define COLLISION_INFO_BIT_MASK_NORMAL_WEST      (1 << (3))
+// #define COLLISION_INFO_BIT_MASK_INSIDE_RECT      (1 << (4))
+#define COLLISION_BIT_MASK_VALID            (1 << (3))  // 0b: 1000
+#define COLLISION_BIT_MASK_INSIDE_RECT      (1 << (2))  // 0b: 0100
+
+#define COLLISION_BIT_MASK_CLEAR_STATUS     (3 << (0))  // 0b: 0011
+#define COLLISION_STATUS_NORMAL_NORTH       (0 << (0))  // 0b: 0000
+#define COLLISION_STATUS_NORMAL_EAST        (1 << (0))  // 0b: 0001
+#define COLLISION_STATUS_NORMAL_SOUTH       (2 << (0))  // 0b: 0010
+#define COLLISION_STATUS_NORMAL_WEST        (3 << (0))  // 0b: 0011
+
 
 #define SCENE_STATUS_PLAYING_OPEN_DOOR_ANIMATION   (1 << (0))  // set/cleared with open-door trigger's update()
 #define SCENE_STATUS_ALLOCATING_VBO_AND_TEXTURE    (1 << (1))  // set after open-door set, cleared in testLayer
@@ -101,6 +110,7 @@ void scene_updateTriggerAndStatus(float delta, glm::vec3 *pos, float *rot, unsig
 
 void scene_LoadData(room r, unsigned char plane);
 
-unsigned char scene_NearObsCube(float delta, glm::vec3 desPos);
-glm::vec3 scene_NormalFromNearObsCube();
-unsigned char scene_InNearObsCube(glm::vec3 desPos /* float delta */);
+unsigned char scene_findCollidingObsCube(float delta, glm::vec3 desPos);
+glm::vec3 scene_normalFromCollidingObsCube();
+unsigned char scene_insideCollidingObsCube(glm::vec3 desPos /* float delta */);
+unsigned char scene_insideAnyObsCube(glm::vec3 desPos);

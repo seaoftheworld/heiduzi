@@ -99,15 +99,15 @@ rect::rect(glm::vec3 ctr, glm::vec3 ld, float *size_rot) {
     *ptrTarget = glm::vec3(modelMat * glm::vec4(orgTargetPosition, 1.0));
 
     // Init the directions for the 4 normals
-    glm::vec3 normalBeforeRot[nIdx::max] = {
-        glm::vec3( 0.0f,  1.0f, 0),  // north, Z should be 0 for 2d normal !!!
-        glm::vec3( 1.0f,  0.0f, 0),  // east
-        glm::vec3( 0.0f, -1.0f, 0),  // south
-        glm::vec3(-1.0f,  0.0f, 0)   // west
-    };
-    for (unsigned char i = 0; i < nIdx::max; i++) {
-        normal[i] = glm::vec3( rotMat * glm::vec4(normalBeforeRot[i], 0.0f) );
-    }
+    // glm::vec3 normalBeforeRot[nIdx::max] = {
+    //     glm::vec3( 0.0f,  1.0f, 0),  // north, Z should be 0 for 2d normal !!!
+    //     glm::vec3( 1.0f,  0.0f, 0),  // east
+    //     glm::vec3( 0.0f, -1.0f, 0),  // south
+    //     glm::vec3(-1.0f,  0.0f, 0)   // west
+    // };
+    // for (unsigned char i = 0; i < nIdx::max; i++) {
+    //     normal[i] = glm::vec3( rotMat * glm::vec4(normalBeforeRot[i], 0.0f) );
+    // }
 
     // Init the collisionInfo
     collisionInfo = 0;

@@ -1,5 +1,7 @@
 #include "scene.h"
+
 #include "scene_data.h"
+#include "scene_data_001.h"
 
 
 
@@ -59,11 +61,11 @@ void hdzScene::setCurrentPlane(unsigned char i) {
 
 
 static unsigned char numNearObsCube = 0;
-static unsigned char nearObsCubeIdx[MAX_NUM_OBSTACLE_CUBE] = {  };
+static unsigned char nearObsCubeIdx[MAX_NUM_OBSTACLE_CUBE] = {};
 
 // Shall be only 1 valid trigger each frame ???
 static unsigned char numValidTrgPad = 0;
-static unsigned char validTrgPadIdx[MAX_NUM_TRIGGERS] = {  };
+static unsigned char validTrgPadIdx[MAX_NUM_TRIGGERS] = {};
 
 static unsigned char sceneStatus = 0;
 
@@ -73,9 +75,19 @@ static targetPlaceInfo targetPlace = {};
 // position/plane-idx info from change-plane trigger
 static targetPlaneInfo targetPositionPlane = {};
 
+static const glm::vec3 normal[nIdx::max] = {
+    glm::vec3( 0.0f,  1.0f, 0.0f),
+    glm::vec3( 1.0f,  0.0f, 0.0f),
+    glm::vec3( 0.0f, -1.0f, 0.0f),
+    glm::vec3(-1.0f,  0.0f, 0.0f)
+};
+
 // These data should be read in from file latter, now they are in array
 sampleInitData initData;
-samplePorchData porchData;
+
+// samplePorchData porchData;
+test001_backYardData backyardData;
+
 sampleYardData  yardData;
 
 
@@ -160,6 +172,88 @@ targetPlaneInfo *scene_getTargetPositionPlane() {
     return &targetPositionPlane;
 }
 
+static void setCollisionStatusBit(glm::vec2 *pos, rect *rec, float margin, float refVal) {
+
+    rec->collisionInfo &= ~COLLISION_BIT_MASK_CLEAR_STATUS;
+
+    if (rec->height + MARGIN_VALUE - pos->y < refVal) {
+        rec->collisionInfo |= COLLISION_STATUS_NORMAL_NORTH;  // only 1-bit for valid and another 1-bit is set
+    }
+    else if (rec->width + MARGIN_VALUE - pos->x < refVal) {
+        rec->collisionInfo |= COLLISION_STATUS_NORMAL_EAST;
+    }
+    else if (pos->y - (-MARGIN_VALUE) < refVal) {
+        rec->collisionInfo |= COLLISION_STATUS_NORMAL_SOUTH;
+    }
+    else if (pos->x - (-MARGIN_VALUE) < refVal) {
+        rec->collisionInfo |= COLLISION_STATUS_NORMAL_WEST;
+    }
+    else {
+        // This shall not be reached, it would cause trouble (player doesnt move) 
+        // When fps is lower --> delta longer --> step larger, this may be reached.
+        // If that happens, the '0.03' value shall be increased accordingly.
+        rec->collisionInfo |= COLLISION_BIT_MASK_INSIDE_RECT;
+    }
+}
+
+static glm::mat4 rotMatFromRect(rect *rec) {
+    if (!rec) {
+        return glm::mat4(1.0f);
+    }
+
+    return glm::rotate(glm::mat4(1.0f), rec->rotZ, glm::vec3(0.0f, 0.0f, 1.0f));
+}
+
+static inline glm::vec3 normalFromCollision(rect *rec) {
+    if (!rec) {
+        return glm::vec3(0.0f);
+    }
+
+    switch (rec->collisionInfo & ~COLLISION_BIT_MASK_VALID) {
+
+        case COLLISION_STATUS_NORMAL_NORTH:
+            return (rec->rotZ == 0.0f) ? (normal[nIdx::north]) : 
+                glm::vec3( rotMatFromRect(rec) * glm::vec4(normal[nIdx::north], 0.0f) );
+            break;
+
+        case COLLISION_STATUS_NORMAL_EAST:
+            return (rec->rotZ == 0.0f) ? (normal[nIdx::east]) : 
+                glm::vec3( rotMatFromRect(rec) * glm::vec4(normal[nIdx::east], 0.0f) );
+            break;
+
+        case COLLISION_STATUS_NORMAL_SOUTH:
+            return (rec->rotZ == 0.0f) ? (normal[nIdx::south]) : 
+                glm::vec3( rotMatFromRect(rec) * glm::vec4(normal[nIdx::south], 0.0f) );
+            break;
+
+        case COLLISION_STATUS_NORMAL_WEST:
+            return (rec->rotZ == 0.0f) ? (normal[nIdx::west]) : 
+                glm::vec3( rotMatFromRect(rec) * glm::vec4(normal[nIdx::west], 0.0f) );
+            break;
+
+        case COLLISION_BIT_MASK_INSIDE_RECT:
+        default:
+            //... ...
+            return glm::vec3(0.0f);
+            break;                
+    }
+}
+
+#define X_IN_RIGHT_MARGIN(pos, rect, margin) (pos.x > rect->width  && pos.x <= rect->width + margin)
+#define X_IN_LEFT_MARGIN(pos, rect, margin)  (pos.x < 0            && pos.x >= (0 - margin))
+#define Y_IN_UP_MARGIN(pos, rect, margin)    (pos.y > rect->height && pos.y <= rect->height + margin)
+#define Y_IN_DOWN_MARGIN(pos, rect, margin)  (pos.y < 0            && pos.y >= (0 - margin))
+
+#define ON_CONNER_AREAS(pos, rect, margin) ( \
+ (X_IN_LEFT_MARGIN(pos, rect, margin) || X_IN_RIGHT_MARGIN(pos, rect, margin)) &&\
+ (Y_IN_UP_MARGIN(pos, rect, margin) || Y_IN_DOWN_MARGIN(pos, rect, margin)) )
+
+#define VALID_COLLISION(col) (col & COLLISION_BIT_MASK_VALID)
+
+
+
+
+
 scenePlane *scene_getCurrentPlane() {
     return hdzScene::getCurrentPlane();
 }
@@ -178,7 +272,8 @@ void scene_LoadData(room r, unsigned char targetPlane) {
     //     break;
         
     case thePorch:
-        ppPlaneData = porchData.plane;
+        // ppPlaneData = porchData.plane;
+        ppPlaneData = backyardData.plane;
         break;
 
     case theYard:
@@ -497,12 +592,7 @@ static unsigned char scene_updateValidTriggerPads(float delta) {
             }
         }
 
-        if (trigger->status & TRIGGER_STATUS_UPDATING) {
-            return 1;
-        }
-        else {
-            return 0;
-        }
+        return (trigger->status & TRIGGER_STATUS_UPDATING) ? 1 : 0;
     // }
 
     // if (num) {
@@ -537,83 +627,43 @@ void scene_updateTriggerAndStatus(float delta, glm::vec3 *pos, float *rot, unsig
 
 
 
-unsigned char scene_NearObsCube(float delta, glm::vec3 desPos) {  // delta is used for calculating '_VALUE'
+unsigned char scene_findCollidingObsCube(float delta, glm::vec3 desPos) {  // delta is used for calculating '_VALUE'
+
+    float _value = (float)_VALUE;
+    unsigned char review = 0;
+
     numNearObsCube = 0;
 
+    // When the other obs-cube has already had a valid collision, skip a obs-cube if play's position 
+    // is inside conner area: left-top/down && right-top/down areas of the obsCube;
+    // Otherwise, when the player moves to where 2 obsCubes connect, the unexpected normal might be returned,
+    // making the player stuck at the intersection of 2 obs-cubes:
+    //
+    //           |  |
+    //        ---+--+ <--(may stuck here)
+    //              |
+    //        ------+ 
+    //
+    //
+    //         + == |---------| == + 
+    //         [skip)         (skip] MARGIN_VALUE
+    //     --- + == +--- w ---+ == + ---
+    //         |    |         |    |
+    //         |    h obsCube h    |
+    //         |    |         |    |
+    //     --- + == 0--- w ---+ == + ---
+    //         [skip)         (skip] MARGIN_VALUE
+    //         + == +---------| == +      
+    //                        |MARG|
+    //
     scenePlane *plane = hdzScene::getCurrentPlane();
     for (unsigned char i = 0; i < plane->numObsCubes; i++) {
 
-        // Verify is destination position inside obsCube's bottom rectangle + margin
         rect *obsCubeBotRect = &plane->obsCube[i].bottomRect;
-
         glm::vec2 coord_converted = glm::vec2(0.0f);
+
+        // Verify is destination position inside obsCube's bottom rectangle + margin
         if ( insideArea(&desPos, obsCubeBotRect, MARGIN_VALUE, &coord_converted) ) {
-
-                // Optional: process with combo normal if the position is inside left-top/down, right-top/down margins of the obsCube.
-                // Otherwise, when 2 obsCube connects, there might be bugs for this algrithom,
-                // wrong normal might be returned.
-                //
-                //         + == |---------| == + 
-                //         [skip)         (skip] MARGIN_VALUE
-                //     --- + == +--- w ---+ == + ---
-                //         |    |         |    |
-                //         |    h obsCube h    |
-                //         |    |         |    |
-                //     --- + == 0--- w ---+ == + ---
-                //         [skip)         (skip] MARGIN_VALUE
-                //         + == +---------| == +      
-                //                        |MARG|
-                //
-                // Without these: player may stuck at connection of 2 obs-cubes (only when facing almost exactly to the connection)\
-                // But with these: Only when facing a conner at 45 degree, pressing forward doesnt makes the position change anymore when close enough,
-                //                 when not exactly 45 degrees, moving towrds the obs-conner, player will get too closer to obs,
-                //                 thus, its found the player will stuck to conner when moving to the other direction after too close (b2 branch),
-                //                 unless moving towards a direction quite opposite from the conner.
-                // #define X_IN_LEFT_MARGIN  (coord_converted.x < 0 && coord_converted.x >= -MARGIN_VALUE)
-                // #define X_IN_RIGHT_MARGIN (coord_converted.x > obsWidth && coord_converted.x <= obsWidth + MARGIN_VALUE)
-                
-                // #define Y_IN_UP_MARGIN    (coord_converted.y > obsHeight && coord_converted.y <= obsHeight + MARGIN_VALUE)
-                // #define Y_IN_DOWN_MARGIN  (coord_converted.y < 0 && coord_converted.y >= -MARGIN_VALUE)
-
-                // if ( (X_IN_LEFT_MARGIN || X_IN_RIGHT_MARGIN) && (Y_IN_UP_MARGIN || Y_IN_DOWN_MARGIN) ) {
-                //     result = 1;
-                //     nearObsCubeIdx[numNearObsCube] = i;
-                //     numNearObsCube++;
-
-                //     printf("  __ on obsCube: %d\n", i);
-                //     // printf("      delta: %f\n", delta);
-                //     // printf("     Margin: %f\n", MARGIN_VALUE);
-                //     // printf("     obs wh_rot: %f, %f, %f\n", obsWidth, obsHeight, obsRot);
-                //     // printf("     obs Left Down: %f, %f\n", obsLeftDownXY.x, obsLeftDownXY.y);
-                //     // printf("     obs Center   : %f, %f\n", obsCubeBotRect->center.x, obsCubeBotRect->center.y);
-                //     // printf("     obs Rect col : %2x", obsCubeBotRect->collisionInfo);
-                //     printf("converted_coord: %f, %f\n\n", coord_converted.x, coord_converted.y);
-
-                //     // if ( (obsCubeBotRect->collisionInfo & COLLISION_INFO_BIT_MASK_COLLISION_VALID) == 0 ) {
-                //     //     obsCubeBotRect->collisionInfo = (COLLISION_INFO_BIT_MASK_COLLISION_VALID | 0);
-
-                //         if (X_IN_LEFT_MARGIN && Y_IN_DOWN_MARGIN) {
-                //             obsCubeBotRect->collisionInfo |= (1 << 4);  // 1000 0000, south-west
-                //         }
-
-                //         if (X_IN_RIGHT_MARGIN && Y_IN_DOWN_MARGIN) {
-                //             obsCubeBotRect->collisionInfo |= (2 << 4);  // 1001 0000, south-east
-                //         }
-
-                //         if (X_IN_RIGHT_MARGIN && Y_IN_UP_MARGIN) {
-                //             obsCubeBotRect->collisionInfo |= (3 << 4);  // 1010 0000, north-east
-                //         }
-
-                //         if (X_IN_LEFT_MARGIN && Y_IN_UP_MARGIN) {       // 1011 0000, north-west
-                //             obsCubeBotRect->collisionInfo |= (4 << 4);
-                //         }
-                //     // }
-                //     continue;
-                // }
-
-
-            nearObsCubeIdx[numNearObsCube] = i;
-            numNearObsCube++;
 
             printf("  __ near obsCube-%d\n", i);
             printf("      delta: %f\n", delta);
@@ -622,146 +672,119 @@ unsigned char scene_NearObsCube(float delta, glm::vec3 desPos) {  // delta is us
             // printf("     obs Left Down: %f, %f\n", obsLeftDownXY.x, obsLeftDownXY.y);
             // printf("     obs Center   : %f, %f\n", obsCubeBotRect->center.x, obsCubeBotRect->center.y);
             // printf("     obs Rect col : %2x", obsCubeBotRect->collisionInfo);
-            printf("converted_coord: %f, %f\n", coord_converted.x, coord_converted.y);
+            printf("des-coord converted: %f, %f\n", coord_converted.x, coord_converted.y);
 
-            // printf("  __ col info 0: 0x%2x\n", obsMesh[i].collisionlInfo);
-            if ( (obsCubeBotRect->collisionInfo & COLLISION_INFO_BIT_MASK_COLLISION_VALID) == 0 ) {
-
-                // obsMesh[i].collisionlInfo |= COLLISION_INFO_BIT_MASK_COLLISION_VALID;       // This line is Wrong !!!
-                // obsMesh[i].collisionlInfo = (COLLISION_INFO_BIT_MASK_COLLISION_VALID | 0);  // shall clear all the other bits and only set 1 bit
-                obsCubeBotRect->collisionInfo = (COLLISION_INFO_BIT_MASK_COLLISION_VALID | 0);
-
-                // printf("  __ col info 1: 0x%2x\n", obsMesh[i].collisionlInfo);
-                float _value = (float)_VALUE;
-                //
-                // if (Y_IN_UP_MARGIN) {  // when the margin-value is 0.05, it's too thin that once the code get here, player already passed through the up-margin
-                if (obsCubeBotRect->height + MARGIN_VALUE - coord_converted.y < _value) {
-                    obsCubeBotRect->collisionInfo |= COLLISION_INFO_BIT_MASK_NORMAL_NORTH;  // only 1-bit for valid and another 1-bit is set
-                }
-                // if (X_IN_RIGHT_MARGIN) {
-                else if (obsCubeBotRect->width + MARGIN_VALUE - coord_converted.x < _value) {
-                    obsCubeBotRect->collisionInfo |= COLLISION_INFO_BIT_MASK_NORMAL_EAST;
-                }
-                // if (Y_IN_DOWN_MARGIN) {
-                else if (coord_converted.y - (-MARGIN_VALUE) < _value) {
-                    obsCubeBotRect->collisionInfo |= COLLISION_INFO_BIT_MASK_NORMAL_SOUTH;
-                }
-                // if (X_IN_LEFT_MARGIN) {
-                else if (coord_converted.x - (-MARGIN_VALUE) < _value) {
-                    obsCubeBotRect->collisionInfo |= COLLISION_INFO_BIT_MASK_NORMAL_WEST;
+            if ( ON_CONNER_AREAS(coord_converted, obsCubeBotRect, MARGIN_VALUE) ) {
+                if ( VALID_COLLISION(obsCubeBotRect->collisionInfo) ) {
+                    // Collision has been valid before the player's postition reaches the obs-cube's cornner,
+                    // which means the player reached the conner by moving along 1 side of the rect, 
+                    // remain the collision status of the obs-cube in this situation.
                 }
                 else {
-                    // This shall not be reached, it would cause trouble (player doesnt move) 
-                    // When fps is lower --> delta longer --> step larger, this may be reached.
-                    // If that happens, the '0.03' value shall be increased accordingly.
-                    obsCubeBotRect->collisionInfo |= COLLISION_INFO_BIT_MASK_INSIDE_RECT;
+                    // The player's postition reached the obs-cube's cornner-area first before reaching the other areas, 
+                    // this kind of collision will be valid only when no other obs-cubes are collided after iteration.
+                    // If the other obs are also found to have been collided during review, this conner collision is ommited.
+                    setCollisionStatusBit(&coord_converted, obsCubeBotRect, MARGIN_VALUE, _value);
+
+                    review = i;
+                    continue;
                 }
             }
-            // printf("  __ col info 2: 0x%2x\n\n", obsMesh[i].collisionlInfo);
+            else {
+                // No longer needed with conner design
+                // Only updates the collision info after player is away from the obs-cube (collision-valid bit is 0)
+                // Otherwise remain the previous collision info even if reached the intersection.
+                // if ( !VALID_COLLISION(obsCubeBotRect->collisionInfo) ) {
+                    setCollisionStatusBit(&coord_converted, obsCubeBotRect, MARGIN_VALUE, _value);
+                    obsCubeBotRect->collisionInfo |= COLLISION_BIT_MASK_VALID;
+                // }
+            }
+
+            nearObsCubeIdx[numNearObsCube] = i;
+            numNearObsCube++;
         }
         else {
-            // printf("  __ col info 3: 0x%2x\n\n", obsMesh[i].collisionlInfo);
-            
-            // obsCubeBotRect->collisionInfo = 0;
-            obsCubeBotRect->collisionInfo &= ~COLLISION_INFO_BIT_MASK_COLLISION_VALID;
-
             // printf("  __ outide mesh[%d]\n", i);
-            // printf("  __ col info: 0x%2x\n\n", obsMesh[i].collisionlInfo);
+            // printf("  __ col info: 0x%2x\n\n", obsMesh[i].collisionInfo);
+            obsCubeBotRect->collisionInfo &= ~COLLISION_BIT_MASK_VALID;
+            obsCubeBotRect->collisionInfo &= ~COLLISION_BIT_MASK_INSIDE_RECT;
         }
+    }
 
-        if (i == plane->numObsCubes - 1 && numNearObsCube) {
-            printf("\n");
+    if (review) {
+        rect *obsCubeBotRect = &plane->obsCube[review].bottomRect;
+        
+        if (numNearObsCube == 0) {
+            obsCubeBotRect->collisionInfo |= COLLISION_BIT_MASK_VALID;
+
+            nearObsCubeIdx[numNearObsCube] = review;
+            numNearObsCube++;
         }
+    }
+
+    if (numNearObsCube) {
+        printf("\n");
     }
 
     return numNearObsCube;
 }
 
-glm::vec3 scene_NormalFromNearObsCube() {
-    glm::vec3 hitNormal = glm::vec3(0.0f);
+#define __10_MARGIN (MARGIN_VALUE + MARGIN_VALUE + \
+    MARGIN_VALUE + MARGIN_VALUE + MARGIN_VALUE + MARGIN_VALUE + \
+    MARGIN_VALUE + MARGIN_VALUE + MARGIN_VALUE + MARGIN_VALUE)
+unsigned char scene_markActiveObsCube(float delta, glm::vec3 desPos) {
+
+    // numActiveObsCube = 0;
 
     scenePlane *plane = hdzScene::getCurrentPlane();
-    // for (unsigned char i = 0; i < plane->numObsCubes; i++) {
+    for (unsigned char i = 0; i < plane->numObsCubes; i++) {
+
+        rect *obsCubeBotRect = &plane->obsCube[i].bottomRect;
+
+        // Verify is destination position inside obsCube's bottom rectangle + 10 * margin,
+        // if inside, this obs-cube should be marked as near.
+        if ( insideArea(&desPos, obsCubeBotRect, __10_MARGIN, NULL) ) {
+            // set active bit, or update the active-obs-cubes' index
+            //... ...
+            // activeObsCubeIdx[numActiveObsCube] = i;
+            // numActiveObsCube++;
+
+            // call something like the previous function
+            //... ...
+        }
+        else {
+            // clear active bit
+            //... ...
+        }
+    }
+
+    // return numActiveObsCube;
+    return 0;
+}
+
+glm::vec3 scene_normalFromCollidingObsCube() {
+    glm::vec3 hitNormal = glm::vec3(0.0f);
+    scenePlane *plane = hdzScene::getCurrentPlane();
+
     for (unsigned char i = 0; i < numNearObsCube; i++) {
 
-        // rect *obsCubeBotRect = &plane->obsCube[i].bottomRect;
-        // rect *obsCubeBotRect = &plane->obsCube[0].bottomRect + nearObsCubeIdx[i];
         rect *obsCubeBotRect = &(&plane->obsCube[0] + nearObsCubeIdx[i])->bottomRect;
 
-        if (obsCubeBotRect->collisionInfo & COLLISION_INFO_BIT_MASK_COLLISION_VALID) {
-
+        if ( (obsCubeBotRect->collisionInfo & COLLISION_BIT_MASK_VALID) ) {
             // printf("  __ normal from obsCube: %d\n", i);
-            printf("     col info: %2x\n", obsCubeBotRect->collisionInfo);
-            
-            switch (obsCubeBotRect->collisionInfo & ~COLLISION_INFO_BIT_MASK_COLLISION_VALID) {
-            // switch (obsCubeBotRect->collisionInfo & ~0xf0) {
-
-            case COLLISION_INFO_BIT_MASK_NORMAL_NORTH:
-                hitNormal += obsCubeBotRect->normal[nIdx::north];
-                break;
-
-            case COLLISION_INFO_BIT_MASK_NORMAL_EAST:
-                hitNormal += obsCubeBotRect->normal[nIdx::east];
-                break;
-
-            case COLLISION_INFO_BIT_MASK_NORMAL_SOUTH:
-                hitNormal += obsCubeBotRect->normal[nIdx::south];
-                break;
-
-            case COLLISION_INFO_BIT_MASK_NORMAL_WEST:
-                hitNormal += obsCubeBotRect->normal[nIdx::west];
-                break;
-
-            // 4 special areas
-            // case (COLLISION_INFO_BIT_MASK_NORMAL_SOUTH | COLLISION_INFO_BIT_MASK_NORMAL_WEST):
-            //     hitNormal += glm::normalize(obsCubeBotRect->normal[nIdx::south] + obsCubeBotRect->normal[nIdx::west]);
-            //     break;
-
-            // case (COLLISION_INFO_BIT_MASK_NORMAL_SOUTH | COLLISION_INFO_BIT_MASK_NORMAL_EAST):
-            //     hitNormal += glm::normalize(obsCubeBotRect->normal[nIdx::south] + obsCubeBotRect->normal[nIdx::east]);
-            //     break;
-
-            // case (COLLISION_INFO_BIT_MASK_NORMAL_NORTH | COLLISION_INFO_BIT_MASK_NORMAL_EAST):
-            //     hitNormal += glm::normalize(obsCubeBotRect->normal[nIdx::north] + obsCubeBotRect->normal[nIdx::east]);
-            //     break;
-
-            // case (COLLISION_INFO_BIT_MASK_NORMAL_NORTH | COLLISION_INFO_BIT_MASK_NORMAL_WEST):
-            //     hitNormal += glm::normalize(obsCubeBotRect->normal[nIdx::north] + obsCubeBotRect->normal[nIdx::west]);
-            //     break;
-
-
-            case COLLISION_INFO_BIT_MASK_INSIDE_RECT:
-                default:
-                //... ...
-                break;                
-            }
-
+            printf("     col info: 0x%2x\n", obsCubeBotRect->collisionInfo);
+            hitNormal += normalFromCollision(obsCubeBotRect);
         }
 
         if (i == plane->numObsCubes - 1) {
             printf("\n");
         }
-
     }
 
-    // Normalize the normal-vector
-    //... ...
-    if (hitNormal != glm::vec3(0.0f)) {
-        hitNormal = glm::normalize(hitNormal);
-    }
-
-    // if (hitNormal != glm::vec3(0.0f)) {
-    //     return glm::normalize(hitNormal);
-    // }
-    // else
-    //     return hitNormal;
-
-    // return glm::normalize(hitNormal);
-
-    return hitNormal;
+    return ( hitNormal == glm::vec3(0.0f) ) ? hitNormal : glm::normalize(hitNormal);
 }
 
-unsigned char scene_InNearObsCube(glm::vec3 desPos) {
+unsigned char scene_insideCollidingObsCube(glm::vec3 desPos) {
     unsigned char num = 0;
     scenePlane *plane = hdzScene::getCurrentPlane();
 
@@ -771,15 +794,39 @@ unsigned char scene_InNearObsCube(glm::vec3 desPos) {
         // Verify is destination position inside obsCube's bottom rectangle
         rect *obsCubeBotRect = &(&plane->obsCube[0] + nearObsCubeIdx[i])->bottomRect;
         
-        if ( insideArea(&desPos, obsCubeBotRect, MARGIN_VALUE, NULL) ) {
-            num++;
+        glm::vec2 coord_converted(0.0f);
+        if ( insideArea(&desPos, obsCubeBotRect, MARGIN_VALUE, &coord_converted) ) {
             // printf("    i     :%d\n", i);
             // printf("    in obs:%d\n", nearObsCubeIdx[i]);
+            printf("  final des Inside near-obs: %f, %f\n\n", coord_converted.x, coord_converted.y);
+            num++;
+        }
+        else {
+            printf("  final des Outside near-obs: %f, %f\n\n", coord_converted.x, coord_converted.y);
         }
     }
+    return num;
+}
 
-    // if (num) {
-    //     printf("    num   :%d\n\n", num);
-    // }
+unsigned char scene_insideAnyObsCube(glm::vec3 desPos) {
+    unsigned char num = 0;
+    scenePlane *plane = hdzScene::getCurrentPlane();
+
+    for (unsigned char i = 0; i < plane->numObsCubes; i++) {
+    // for (unsigned char i = 0; i < numNearObsCube; i++) {
+
+        // Verify is destination position inside obsCube's bottom rectangle
+        // rect *obsCubeBotRect = &(&plane->obsCube[0] + nearObsCubeIdx[i])->bottomRect;
+        rect *obsCubeBotRect = &plane->obsCube[i].bottomRect;
+        
+        glm::vec2 coord_converted(0.0f);
+        if ( insideArea(&desPos, obsCubeBotRect, MARGIN_VALUE, &coord_converted) ) {
+            printf("  \n\nfinal des Inside obs-%d: %f, %f\n", i, coord_converted.x, coord_converted.y);
+            num++;
+        }
+        else {
+            // printf("  final des Outside near-obs: %f, %f\n\n", coord_converted.x, coord_converted.y);
+        }
+    }
     return num;
 }
