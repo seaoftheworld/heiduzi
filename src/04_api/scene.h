@@ -9,14 +9,17 @@
 // These values are supposed to be less than 255 in most cases,
 // so 'unsigned char' could be used as index to address
 // the elements in an array[these_number]
-#define MAX_NUM_PLANE         (16)
-#define MAX_NUM_OBSTACLE_CUBE (32)
-#define MAX_NUM_TRIGGERS      (32)
-// #define MAX_NUM_TRANSFERS  (16)
+#define MAX_NUM_PLANE             (16)
+#define MAX_NUM_OBSTACLE_CUBE     (32)
+#define MAX_NUM_TRIGGERS          (32)
+// #define MAX_NUM_TRANSFERS      (16)
+#define MAX_NUM_CAMERAS           (32)
+#define MAX_NUM_ALL_CAM_SWITCHES  (64)  // The max number of switches from all cams in a scene/plane combined together.
 
 #define ZHEIGHT_OBSTACLE_CUBE (4.0f)
 #define ZHEIGHT_TRIGGER_PAD   (0.2f)
 // #define ZHEIGHT_LIFT_PAD   (0.4f)
+#define ZHEIGHT_CAM_SW_PAD    (0.2f)
 
 // #define COLLISION_INFO_BIT_MASK_COLLISION_VALID  (1 << (7))
 // #define COLLISION_INFO_BIT_MASK_COLLISION_VALID  (1 << (sizeof(unsigned char) * 8 - 1))
@@ -47,9 +50,13 @@
 #define __PI_4   (0.785f)
 #define __3_PI_4 (2.355f)
 
+// #define __TEST00__
+// #define __TEST01__
+
 
 typedef enum {
-    roomInit, thePorch, theHall, theEastRoom, theWestRoom, theYard, roomMax
+    // roomInit, thePorch, theHall, theEastRoom, theWestRoom, theYard, roomMax
+    backYard = 0, theStreet, roomMax
 } room;
 
 // struct transfer {
@@ -67,10 +74,27 @@ typedef enum {
 //     // glm::vec3 *targetPos; passed in when updater called
 // };
 
+struct camSwitch {
+    cube pad; // for debuggin
+    // rect area;
+    unsigned char targetCamIdx;
+};
+struct cameraInfo {
+    unsigned char index;
+
+    glm::vec3 position;
+    float hAngle, vAngle;
+
+    camSwitch *sw;  // points to 1 element in the 'camSwitch allCamSw[]' array
+    unsigned char numSw;
+};
+
 // room info from Open-Door trigger
 struct targetPlaceInfo {
     room rm;
-    unsigned char pl;
+    unsigned char plane;
+    unsigned char camIdx;
+
     float enteringPosRot[4];
 };
 
@@ -89,6 +113,12 @@ struct scenePlane {
 
     // transfer lift[MAX_NUM_TRANSFERS];
     // unsigned char numLifts;
+
+    cameraInfo cam[MAX_NUM_CAMERAS];
+    unsigned char numCams;
+
+    camSwitch allCamSw[MAX_NUM_ALL_CAM_SWITCHES];
+    unsigned char numAllCamSw;
 };
 
 
@@ -104,11 +134,15 @@ targetPlaceInfo *scene_getTargetPlace();
 targetPlaneInfo *scene_getTargetPositionPlane();
 
 
+void scene_getCamPosRot(unsigned char camIdx, glm::vec3 *pos, float *rot);
+unsigned char scene_updateCurrentCameraIndex(glm::vec3 playerPos);
+unsigned char scene_getCurrentCameraIndex();
+
 // unsigned char scene_findValidTriggerPads(glm::vec3 *pos, float *rot, unsigned char input /* float delta */);
 // unsigned char scene_updateValidTriggerPads(float delta);
 void scene_updateTriggerAndStatus(float delta, glm::vec3 *pos, float *rot, unsigned char input);
 
-void scene_LoadData(room r, unsigned char plane);
+void scene_LoadData(room r, unsigned char plane, unsigned char targetCamIdx);
 
 unsigned char scene_findCollidingObsCube(float delta, glm::vec3 desPos);
 glm::vec3 scene_normalFromCollidingObsCube();

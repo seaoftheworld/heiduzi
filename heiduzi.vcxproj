@@ -48,7 +48,8 @@
     <ClInclude Include="src\04_api\layers.h" />
     <ClInclude Include="src\04_api\renderer.h" />
     <ClInclude Include="src\04_api\scene_data.h" />
-    <ClInclude Include="src\04_api\scene_data_001.h" />
+    <ClInclude Include="src\04_api\test_data_000.h" />
+    <ClInclude Include="src\04_api\test_data_001.h" />
     <ClInclude Include="src\04_api\trigger.h" />
     <ClInclude Include="src\testLayer.h" />
   </ItemGroup>

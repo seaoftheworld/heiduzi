@@ -15,47 +15,11 @@ glm::mat4 getProjectionMatrix(){
     return ProjectionMatrix;
 }
 
-
-// Initial position : on +Z
-// glm::vec3 position = glm::vec3(2.f, -4.f, 1.f);
-// glm::vec3 camDirection(0.f, 1.f, 0.f);
-// glm::vec3 camUp(0.f, 0.f, 1.f);
-
-// // glm::vec3 position = glm::vec3(17.0f, -3.5f, 9.5f);
-// glm::vec3 position = glm::vec3(11.0f, -0.7f, 4.8f);
-// glm::vec3 camDirection(0.0f);  // direc/up calculated according to h/v angle
-// glm::vec3 camUp(0.0f);
-
-// // Initial horizontal angle : toward -Z
-// // float horizontalAngle = 3.14f;
-// // float horizontalAngle = 0.0f;
-// // Initial vertical angle : none
-// // float verticalAngle = 0.0f;
-
-// // float horizontalAngle = -1.125f;
-// // float verticalAngle = -0.555f;
-// float horizontalAngle = -0.92f;
-// float verticalAngle = -0.415f;
-
-// glm::vec3 position = glm::vec3(11.0f, -0.7f, 4.8f);
-// float horizontalAngle = -0.92f;
-// float verticalAngle = -0.415f;
-
-// To the door in the back yard
-// glm::vec3 position = glm::vec3(8.049f, -0.294f, 1.073f);
-// float horizontalAngle = -1.05f;
-// float verticalAngle = -0.245f;
-glm::vec3 position = glm::vec3(7.783f, -1.329f, 1.178f);
-float horizontalAngle = -7.195f;
-float verticalAngle = -0.135f;
-
-// To the gate in the back yard
-// glm::vec3 position = glm::vec3(-4.496f, 3.65f, 2.19f);
-// float horizontalAngle = -3.075f;
-// float verticalAngle = -0.595f;
-// glm::vec3 position = glm::vec3(-6.54f, 2.91f, 0.973f);
-// float horizontalAngle = -3.485f;
-// float verticalAngle = -0.19f;
+// These values are assigned by calling updateMatricesForCamera() in testLayer, it is 
+// called with the pos/rot from currently indexed camera as input parameter.
+glm::vec3 position = glm::vec3(0.0f);
+float horizontalAngle = 0.0f;
+float verticalAngle = 0.0f;
 
 glm::vec3 camDirection(0.0f);  // direc/up calculated according to h/v angle
 glm::vec3 camUp(0.0f);
@@ -94,6 +58,59 @@ static void printfGlmVec4(const char *prefix, glm::vec4 v4) {
         printf("%f, ", p[i]);
     }
     printf("\n");
+}
+
+void updateMatricesForCamera(glm::vec3 *camPos, float *camHvAngle){
+
+    if (camPos && camHvAngle) {
+        // Update cam's position and hv-rot first
+        position = *camPos;
+        horizontalAngle = camHvAngle[0];
+        verticalAngle = camHvAngle[1];
+
+        // Get mouse position
+        double xpos, ypos;
+        glfwGetCursorPos(window, &xpos, &ypos);
+
+        // Reset mouse position for next frame
+        glfwSetCursorPos(window, CTL_WIDTH / 2, CTL_HEIGHT / 2);
+
+        // Compute new orientation
+        horizontalAngle += mouseSpeed * (float)(xpos - CTL_WIDTH / 2);  // moveLeft --, moveRight ++
+        verticalAngle += mouseSpeed * (float)(CTL_HEIGHT / 2 - ypos);   // moveUp ++, moveDown --
+
+        camDirection = glm::vec3(
+            cos(verticalAngle) * sin(horizontalAngle), 
+            cos(verticalAngle) * cos(horizontalAngle),
+            sin(verticalAngle)
+        );
+        
+        glm::vec3 camRight = glm::vec3(
+            sin( 3.14f / 2.0f - horizontalAngle), 
+            cos(-3.14f / 2.0f - horizontalAngle),
+            0
+        );
+
+        // Up vector
+        camUp = glm::cross( camRight, camDirection );
+
+        if (horizontalAngle != prev_horizontalAngle || verticalAngle != prev_veticalAngle) {
+            prev_horizontalAngle = horizontalAngle;
+            prev_veticalAngle = verticalAngle;
+        }
+
+        float FoV = initialFoV;// - 5 * glfwGetMouseWheel(); // Now GLFW 3 requires setting up a callback for this. It's a bit too complicated for this beginner's tutorial, so it's disabled instead.
+
+        // Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
+        ProjectionMatrix = glm::perspective(glm::radians(FoV), (float)CTL_WIDTH / CTL_HEIGHT, 0.1f, 100.0f);
+        
+        // Camera matrix
+        ViewMatrix       = glm::lookAt(
+                                    position,           // Camera is here
+                                    position + camDirection, // and looks here : at the same position, plus "camDirection"
+                                    camUp                    // Head is up (set to 0,-1,0 to look upside-down)
+                               );
+    }
 }
 
 void computeMatricesFromInputs(){

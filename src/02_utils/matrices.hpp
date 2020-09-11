@@ -8,6 +8,8 @@
     #include <glm/gtc/type_ptr.hpp>
 using namespace glm;
 
+void updateMatricesForCamera(glm::vec3 *camPos, float *camHvAngle);
 void computeMatricesFromInputs();
+
 glm::mat4 getViewMatrix();
 glm::mat4 getProjectionMatrix();

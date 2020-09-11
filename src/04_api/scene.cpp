@@ -1,7 +1,7 @@
 #include "scene.h"
 
-#include "scene_data.h"
-#include "scene_data_001.h"
+#include "test_data_000.h"  // contains collision/trigger/cam data of the bedroom 
+#include "test_data_001.h"  // contains collision/trigger/cam data for the 'backYard'
 
 
 
@@ -67,6 +67,10 @@ static unsigned char nearObsCubeIdx[MAX_NUM_OBSTACLE_CUBE] = {};
 static unsigned char numValidTrgPad = 0;
 static unsigned char validTrgPadIdx[MAX_NUM_TRIGGERS] = {};
 
+// static unsigned char numCameras = 0;
+static unsigned char currentCamIdx = 0;
+static unsigned char numCurrentCamSwitch = 0;
+
 static unsigned char sceneStatus = 0;
 
 // room info from Open-Door trigger
@@ -83,12 +87,15 @@ static const glm::vec3 normal[nIdx::max] = {
 };
 
 // These data should be read in from file latter, now they are in array
-sampleInitData initData;
+#ifdef __TEST00__
+    test00_Data backyardData;
+#elif defined __TEST01__
+    test01_Data backyardData;
+#else
+    SampleBackyardData backyardData;
+#endif
 
-// samplePorchData porchData;
-test001_backYardData backyardData;
-
-sampleYardData  yardData;
+sampleStreetData  streetData;
 
 
 
@@ -127,26 +134,30 @@ void scene_setStatus(unsigned char sts) {
     sceneStatus = sts;
 }
 
-static inline void scene_setTargetPlace(unsigned char room, unsigned char plane, float *pos_rot) {
-    switch (room) {
-    case thePorch:
-        printf("  porch from open-door trigger.\n");
-        targetPlace.rm = thePorch;
-        break;
+// static inline void scene_setTargetPlace(unsigned char room, unsigned char plane, float *pos_rot) {
+static inline void scene_setTargetPlace(unsigned char *room_plane_camera, float *pos_rot) {
+    if (room_plane_camera) {
+        switch ( room_plane_camera[0] ) {
+        case backYard:
+            printf("  \'backYard\' from open-door trigger.\n");
+            targetPlace.rm = backYard;
+            break;
 
-    case theYard:
-        printf("  yard from open-door trigger.\n");
-        targetPlace.rm = theYard;
-        break;
+        case theStreet:
+            printf("  \'theStreet\' from open-door trigger.\n");
+            targetPlace.rm = theStreet;
+            break;
 
-    case roomMax:
-    default:
-        printf("  roomMax ??? from open-door trigger.\n");
-        targetPlace.rm = roomMax;
-        break;
+        case roomMax:
+        default:
+            printf("  roomMax ??? from open-door trigger.\n");
+            targetPlace.rm = roomMax;
+            break;
+        }
+
+        targetPlace.plane = room_plane_camera[1];
+        targetPlace.camIdx = room_plane_camera[2];
     }
-
-    targetPlace.pl = plane;
 
     if (pos_rot) {
         targetPlace.enteringPosRot[0] = pos_rot[0];
@@ -263,7 +274,7 @@ void scene_setCurrentPlane(unsigned char i) {
     sceneStatus &= ~SCENE_STATUS_CHANGE_PLANE_INDEX;
 }
 
-void scene_LoadData(room r, unsigned char targetPlane) {
+void scene_LoadData(room r, unsigned char targetPlane, unsigned char targetCamIdx) {
 
     planeData** ppPlaneData = NULL;
     switch (r) {
@@ -271,13 +282,13 @@ void scene_LoadData(room r, unsigned char targetPlane) {
     //     ppPlaneData = initData.plane;
     //     break;
         
-    case thePorch:
+    case backYard:
         // ppPlaneData = porchData.plane;
         ppPlaneData = backyardData.plane;
         break;
 
-    case theYard:
-        ppPlaneData = yardData.plane;
+    case theStreet:
+        ppPlaneData = streetData.plane;
         break;
 
     case roomMax:
@@ -298,9 +309,7 @@ void scene_LoadData(room r, unsigned char targetPlane) {
             plane->numObsCubes = 0;
 
             areaData *aData = (*ppPlaneData)->obsAreas;
-            if (!aData) { return; }
-
-            while (aData->w != 0 && aData->h != 0) {
+            while (aData && aData->w != 0 && aData->h != 0) {
 
                 float size_rot[] = {aData->w, aData->h, aData->rotZ};
                 plane->obsCube[obsCubeIdx] = cube(aData->center, aData->leftDown, size_rot, ZHEIGHT_OBSTACLE_CUBE);
@@ -316,9 +325,7 @@ void scene_LoadData(room r, unsigned char targetPlane) {
             plane->numTriggers = 0;
 
             triggerData *tData = (*ppPlaneData)->trgAreas;
-            if (!tData) { return; }
-
-            while (tData->type != NULL) {
+            while (tData && tData->type != NULL) {
 
                 // Assign value for plane.trigger.pad and setting values for general values
                 areaData *aData = &tData->area; float size_rot[] = {aData->w, aData->h, aData->rotZ};
@@ -372,10 +379,12 @@ void scene_LoadData(room r, unsigned char targetPlane) {
 
                     plane->trigger[triggerIdx].targetRoomIdx = tData->info.targetRoomIdx;
                     plane->trigger[triggerIdx].targetPlaneIdx = tData->info.targetPlaneIdx;
+                    plane->trigger[triggerIdx].targetCameraIdx = tData->info.targetCameraIdx;
 
-                    printf("open-door trigger inited, target room/plane: %d/%d\n", 
+                    printf("open-door trigger inited, target room/plane/cam: %d/%d/%d\n", 
                         plane->trigger[triggerIdx].targetRoomIdx,
-                        plane->trigger[triggerIdx].targetPlaneIdx);
+                        plane->trigger[triggerIdx].targetPlaneIdx,
+                        plane->trigger[triggerIdx].targetCameraIdx);
                     // printf("open-door trigger status: 0x%2x\n", plane->trigger[triggerIdx].status);
                 }
                 else {
@@ -426,6 +435,72 @@ void scene_LoadData(room r, unsigned char targetPlane) {
             // }
             // plane->numLifts = liftIdx;
 
+            unsigned char camIdx = 0;
+            unsigned char allCamSwIdx = 0;
+            plane->numCams = 0;
+
+            cameraData **cData = (*ppPlaneData)->cam;
+            while (cData && *cData) {
+                // Assign value for plane->cam[]/numCams
+                    plane->cam[camIdx].index = camIdx;
+                    plane->cam[camIdx].position.x = (*cData)->pos_rot.x;
+                    plane->cam[camIdx].position.y = (*cData)->pos_rot.y;
+                    plane->cam[camIdx].position.z = (*cData)->pos_rot.z;
+                    plane->cam[camIdx].hAngle = (*cData)->pos_rot.hRot;
+                    plane->cam[camIdx].vAngle = (*cData)->pos_rot.vRot;
+
+                // Assign value for plane->allCamSw[]/numAllCamSw
+                    camSwitchData *camSw = (*cData)->sw;
+                    unsigned char numSw = 0;
+
+                    if (camSw->area.w == 0.0f && camSw->area.h == 0.0f) {
+                        plane->cam[camIdx].sw = NULL;
+                    }
+                    else {
+                        plane->cam[camIdx].sw = &plane->allCamSw[allCamSwIdx];
+
+                        while ( camSw->area.w != 0.0f && camSw->area.h != 0.0f ) {
+                            areaData *area = &camSw->area; 
+                            float size_rot[] = {area->w, area->h, area->rotZ};
+
+                            // printf("allCamSwIdx: %d, wh: %f, %f\n", allCamSwIdx, camSw->area.w, camSw->area.h);
+                            // plane->allCamSw[allCamSwIdx].area = rect(area->center, area->leftDown, size_rot);
+                            plane->allCamSw[allCamSwIdx].pad = cube(area->center, area->leftDown, size_rot, ZHEIGHT_CAM_SW_PAD);
+                            plane->allCamSw[allCamSwIdx].targetCamIdx = camSw->targetIndex;
+
+                            allCamSwIdx++;
+                            numSw++;
+                            camSw++;
+                        }
+                    }
+                    plane->cam[camIdx].numSw = numSw;
+
+                    printf("\ncam-%d data inited, it has: %d sw, allCamSw num is \'%d\' now\n\n", camIdx, numSw, allCamSwIdx);
+
+                camIdx++;
+                cData++;
+            }
+            plane->numCams = camIdx;
+            plane->numAllCamSw = allCamSwIdx;
+
+            // index of camera shall be independent from plane in the future
+            if (plane->numCams != 0) {
+                currentCamIdx = (targetCamIdx >= plane->numCams) ? (plane->numCams - 1) : targetCamIdx;
+            }
+            else {
+                // provide a default camera if no camData is found from the file/data
+                plane->cam[0].position = glm::vec3(1.0f);
+                plane->cam[0].hAngle = 0.0f;
+                plane->cam[0].vAngle = 0.0f;
+                plane->cam[0].index = 0;
+                plane->cam[0].sw = NULL;
+                
+                plane->numCams = 1;
+                currentCamIdx = 0;
+            }
+
+
+
         planeIdx++;
         ppPlaneData++;
     }
@@ -444,12 +519,8 @@ void scene_LoadData(room r, unsigned char targetPlane) {
         return;
     }
 
-    if (targetPlane >= hdzScene::numPlanes) {
-        hdzScene::plIdx = hdzScene::numPlanes - 1;
-    }
-    else {
-        hdzScene::plIdx = targetPlane;
-    }
+    hdzScene::plIdx = (targetPlane >= hdzScene::numPlanes) ? (hdzScene::numPlanes - 1) : (targetPlane);
+    // currentCamIdx = (targetCamIdx >= plane->numCams) ? (plane->numCams - 1) : targetCamIdx;
 
     printf("\n\n");
     printf("  scene data loaded\n");
@@ -458,11 +529,47 @@ void scene_LoadData(room r, unsigned char targetPlane) {
         printf("      plane[%d] has \'%d\' obsAreas\n", i, hdzScene::plane[i].numObsCubes);
         printf("                    \'%d\' triggers\n", hdzScene::plane[i].numTriggers);
         // printf("                    \'%d\' lifs\n", hdzScene::plane[i].numLifts);
+        printf("                    \'%d\' cams\n", hdzScene::plane[i].numCams);
     }
     printf("    now on plane %d\n", hdzScene::plIdx);
+    printf("    now at cam %d\n", currentCamIdx);
     printf("\n\n");
 }
 
+
+unsigned char scene_updateCurrentCameraIndex(glm::vec3 playerPos) {
+    scenePlane *plane = hdzScene::getCurrentPlane();
+
+    for (unsigned char i = 0; i < plane->cam[currentCamIdx].numSw; i++) {
+        if ( insideArea(&playerPos, &plane->cam[currentCamIdx].sw[i].pad.bottomRect, 0, NULL) ) {
+            currentCamIdx = plane->cam[currentCamIdx].sw[i].targetCamIdx;
+            break;
+        }
+    }
+
+    return currentCamIdx;
+}
+
+unsigned char scene_getCurrentCameraIndex() {
+    return currentCamIdx;
+}
+
+void scene_getCamPosRot(unsigned char camIdx, glm::vec3 *pos, float *rot) {
+    scenePlane *plane = hdzScene::getCurrentPlane();
+
+    if (camIdx < plane->numCams) {
+
+        if (pos) {
+            *pos = plane->cam[camIdx].position;
+        }
+
+        if (rot) {
+            rot[0] = plane->cam[camIdx].hAngle;
+            rot[1] = plane->cam[camIdx].vAngle;
+        }
+    }
+
+}
 
 static unsigned char scene_findValidTriggerPads(glm::vec3 *pos, float *rot, unsigned char input) {
     numValidTrgPad = 0;
@@ -578,7 +685,10 @@ static unsigned char scene_updateValidTriggerPads(float delta) {
         if ( trigger->type == trigger_OpenDoor) { 
             if ( trigger->status & TRIGGER_STATUS_FIRST_UPDATE_DONE ) {
                 // Get data for the room to be entered from door-trigger
-                scene_setTargetPlace(trigger->targetRoomIdx, trigger->targetPlaneIdx, trigger->enteringPosRot);
+                unsigned char target_room_plane_camera[] = {
+                    trigger->targetRoomIdx, trigger->targetPlaneIdx, trigger->targetCameraIdx
+                };
+                scene_setTargetPlace(target_room_plane_camera, trigger->enteringPosRot);
 
                 sceneStatus |= SCENE_STATUS_PLAYING_OPEN_DOOR_ANIMATION;
                 sceneStatus |= SCENE_STATUS_ALLOCATING_VBO_AND_TEXTURE;  // tobe cleared in testLayer

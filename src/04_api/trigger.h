@@ -98,6 +98,7 @@ public:
     // Data only used for trigger_OpenDoor
     float enteringPosRot[4];
     unsigned char targetRoomIdx;
+    unsigned char targetCameraIdx;
     
     // Data for trigger_Slope
 

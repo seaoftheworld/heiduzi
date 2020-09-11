@@ -23,17 +23,17 @@ static std::string roomTexture;
 
 static void getModelTexturePath(room rm) {
     switch ( rm ) {
-        case thePorch:
+        case backYard:
             // roomMesh    = "assets/rooms/thePorch/rb73_yForward_zUp.obj";
-            roomTexture = "assets/rooms/thePorch/backyard.png";
-            roomMesh    = "assets/rooms/thePorch/backyard.obj";
             // roomTexture = "assets/rooms/thePorch/Misa.png";
+            roomTexture = "assets/rooms/backyard/backyard.png";
+            roomMesh    = "assets/rooms/backyard/backyard.obj";
         break;
 
-        case theYard:
+        case theStreet:
             // roomMesh    = "assets/rooms/thePorch/rb73_yForward_zUp.obj";
-            roomMesh    = "assets/rooms/theYard/low_poly_room_002.obj";
-            roomTexture = "assets/rooms/theYard/low_poly_room_002.png";
+            roomMesh    = "assets/rooms/theStreet/low_poly_room_002.obj";
+            roomTexture = "assets/rooms/theStreet/low_poly_room_002.png";
         break;
 
         // use test/debug room mesh/texture in this case to show error occured
@@ -45,10 +45,15 @@ static void getModelTexturePath(room rm) {
     }
 }
 
-static void enterRoomUpdate(targetPlaceInfo targetPlace) {
-    scene_LoadData(targetPlace.rm, targetPlace.pl);
-    player.position = glm::vec3(targetPlace.enteringPosRot[0], targetPlace.enteringPosRot[1], targetPlace.enteringPosRot[2]);
-    player.yAngle = targetPlace.enteringPosRot[3];
+static void enterRoomUpdate(targetPlaceInfo t) {
+    scene_LoadData(t.rm, t.plane, t.camIdx);
+
+    player.position = glm::vec3(t.enteringPosRot[0], t.enteringPosRot[1], t.enteringPosRot[2]);
+    player.yAngle = t.enteringPosRot[3];
+
+    glm::vec3 newCamPos; float newCamHvAngle[2]; 
+    scene_getCamPosRot(scene_getCurrentCameraIndex(), &newCamPos, newCamHvAngle);
+    updateMatricesForCamera(&newCamPos, newCamHvAngle);
 }
 
 static glm::vec3 positionCorrection(float delta, glm::vec3 to, glm::vec3 from) {
@@ -129,8 +134,8 @@ void test_gameLayer::attach01() {
     // const std::string &roomMesh    = "assets/rooms/thePorch/Misa.obj";
     // const std::string &roomTexture = "assets/rooms/thePorch/Misa.png";
     // roomRenderer.allocateBuffers(roomMesh, roomTexture);
-    const std::string &roomTexture = "assets/rooms/thePorch/backyard.png";
-    const std::string &roomMesh    = "assets/rooms/thePorch/backyard.obj";
+    const std::string &roomTexture = "assets/rooms/backyard/backyard.png";
+    const std::string &roomMesh    = "assets/rooms/backyard/backyard.obj";
     while(1) {
         unsigned char alloc_result = roomRenderer.nonblocking_allocateBuffers(roomMesh, roomTexture);
         if (alloc_result == 0) {
@@ -225,8 +230,9 @@ void test_gameLayer::update(float deltaTime, gameInputStatus input) {
             // setSceneStatus( getSceneStatus() | SCENE_STATUS_BIT_MASK_OPENNING_DOOR);
         
         targetPlaceInfo target;
-        target.rm = thePorch;  // the backyard model is loaded and displayed now
-        target.pl = 0;
+        target.rm = backYard;  // the backyard model is loaded and displayed now
+        target.plane = 0;
+        target.camIdx = 2;
         // target.enteringPosRot[0] = 9.0f;
         // target.enteringPosRot[1] = 7.5f;
         // target.enteringPosRot[2] = 0.0f;
@@ -237,11 +243,27 @@ void test_gameLayer::update(float deltaTime, gameInputStatus input) {
         
         enterRoomUpdate(target);
 
+        // glm::vec3 newCamPos; float newCamHvAngle[2]; 
+        // scene_getCamPosRot(scene_getCurrentCameraIndex(), &newCamPos, newCamHvAngle);
+        // updateMatricesForCamera(&newCamPos, newCamHvAngle);
+
         firstUpdate = 0;
     }
 
+    // Get camera index and update the view/projection matrices according to cam-index
+    static unsigned char prevCamIndex = scene_getCurrentCameraIndex();
+    unsigned char newCamIndex = scene_updateCurrentCameraIndex(player.position);
 
     // Update the mvp(shall be view-mat only) matrixes for the room accoridng to mouse/key input
+    if (newCamIndex != prevCamIndex) {
+        printf("  __cam changed from: %d to: %d\n",prevCamIndex, newCamIndex);
+
+        glm::vec3 newCamPos; float newCamHvAngle[2]; 
+        scene_getCamPosRot(newCamIndex, &newCamPos, newCamHvAngle);
+        updateMatricesForCamera(&newCamPos, newCamHvAngle);
+    }
+    prevCamIndex = newCamIndex;
+
     computeMatricesFromInputs();
 
     scene_updateTriggerAndStatus(deltaTime, &player.position, &player.yAngle, input.m_byte);
@@ -372,27 +394,28 @@ void test_gameLayer::render() {
         //display door animation ??? ...
     }
     else {
-
-        // printf("normal render\n");
-
-        // To draw debug lines for obsCubes and triggers in the current plane
+        // Dispaly obsCube areas
         scenePlane *plane = scene_getCurrentPlane();
+
         for (unsigned char i = 0; i < plane->numObsCubes; i++) {
 
             cube *obsCube = &plane->obsCube[i];
-            if ( (obsCube->bottomRect.collisionInfo & COLLISION_BIT_MASK_VALID) != 0 ) {
-            // if (1) {
+            #if defined(__TEST00__) || defined(__TEST01__)
+                {
+            #else
+                if ( (obsCube->bottomRect.collisionInfo & COLLISION_BIT_MASK_VALID) != 0 ) {
+            #endif
+                    float vt[NUM_VERTICES_FOR_CUBE * 3] = { 0 };
+                    for (unsigned char j = 0; j < NUM_VERTICES_FOR_CUBE; j++) {
+                        vt[j * 3 + 0] = obsCube->vertices[j].x;
+                        vt[j * 3 + 1] = obsCube->vertices[j].y;
+                        vt[j * 3 + 2] = obsCube->vertices[j].z;
+                    }
 
-                float vt[NUM_VERTICES_FOR_CUBE * 3] = { 0 };
-                for (unsigned char j = 0; j < NUM_VERTICES_FOR_CUBE; j++) {
-                    vt[j * 3 + 0] = obsCube->vertices[j].x;
-                    vt[j * 3 + 1] = obsCube->vertices[j].y;
-                    vt[j * 3 + 2] = obsCube->vertices[j].z;
+                    _dbgDrawBox(vt);
                 }
-
-                _dbgDrawBox(vt);
-            }
         }
+        // Display trigger areas
         for (unsigned char i = 0; i < plane->numTriggers; i++) {
             cube *trgCube = &plane->trigger[i].pad;
 
@@ -407,12 +430,31 @@ void test_gameLayer::render() {
                 _dbgDrawBox(vt);
             }
         }
+        // Display camera switch areas
+        // for (unsigned char i = 0; i < plane->cam[scene_getCurrentCameraIndex()].numSw; i++) {
+        //     cube *camSwPad = &plane->cam[scene_getCurrentCameraIndex()].sw[i].pad;
+
+        //     if (1) {
+        //         float vt[NUM_VERTICES_FOR_CUBE * 3] = { 0 };
+        //         for (unsigned char j = 0; j < NUM_VERTICES_FOR_CUBE; j++) {
+        //             vt[j * 3 + 0] = camSwPad->vertices[j].x;
+        //             vt[j * 3 + 1] = camSwPad->vertices[j].y;
+        //             vt[j * 3 + 2] = camSwPad->vertices[j].z;
+        //         }
+
+        //         _dbgDrawBox(vt);
+        //     }
+        // }
 
         testRenderer::useTestGpuProgram();
         // 2.1 Set the slot to be used for the texture of the room, and draw the room with buffers
-        roomRenderer.useTextureSlot();
-        roomRenderer.drawBuffers();           // draw the room with previously updated V/P matrixes, 
-                                              // shall draw with updated 'view' data in the future... ...
+        #ifdef __TEST00__
+        #elif defined __TEST01__
+        #else
+            roomRenderer.useTextureSlot();
+            roomRenderer.drawBuffers();           // draw the room with previously updated V/P matrixes, 
+                                                  // shall draw with updated 'view' data in the future... ...
+        #endif
 
         // 2.2 Set the slot to be used for the texture of the player, and draw the player with buffers
         playerRenderer.useTextureSlot();
